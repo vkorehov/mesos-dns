@@ -22,6 +22,11 @@ type Slaves []struct {
 	Hostname string `json:hostname"`
 }
 
+// Resources holds our SRV ports
+type Resources struct {
+	Ports string `json:"ports"`
+}
+
 // Tasks holds mesos task information read in from state.json
 type Tasks []struct {
 	FrameworkId string `json:"framework_id"`
@@ -29,6 +34,7 @@ type Tasks []struct {
 	Name        string `json:"name"`
 	SlaveId     string `json:"slave_id"`
 	State       string `json:"state"`
+	Resources   `json:"resources"`
 }
 
 // Frameworks holds mesos frameworks information read in from state.json
@@ -49,7 +55,7 @@ type StateJSON struct {
 // prob. want to break apart
 // refactor me - prob. not needed
 type RecordGenerator struct {
-	SRVs rrs
+	RRs rrs
 	Slaves
 }
 
@@ -146,6 +152,14 @@ func (rg *RecordGenerator) loadWrap(ip string, port string) (StateJSON, error) {
 	return sj, err
 }
 
+// yankPort grabs the first port in the port field
+// this takes a string even though it should take an array
+func yankPort(ports string) string {
+	rhs := strings.Split(ports, "[")[1]
+	lhs := strings.Split(rhs, "]")[0]
+	return strings.Split(lhs, "-")[0]
+}
+
 // ParseState parses a state.json from a mesos master
 // it sets the resource records map for the resolver
 // with the following format
@@ -178,7 +192,7 @@ func (rg *RecordGenerator) ParseState(config Config) {
 
 	rg.Slaves = sj.Slaves
 
-	rg.SRVs = make(rrs)
+	rg.RRs = make(rrs)
 
 	f := sj.Frameworks
 
@@ -187,10 +201,15 @@ func (rg *RecordGenerator) ParseState(config Config) {
 		fname := f[i].Name
 
 		for x := 0; x < len(f[i].Tasks); x++ {
+			task := f[i].Tasks[x]
 
-			host, err := rg.hostBySlaveId(f[i].Tasks[x].SlaveId)
+			host, err := rg.hostBySlaveId(task.SlaveId)
 			if err == nil {
-				tname := stripUID(f[i].Tasks[x].Name)
+				tname := stripUID(task.Name)
+				port := yankPort(task.Resources.Ports)
+
+				// hack
+				host += ":" + port
 
 				tcp := tname + "._tcp." + fname + ".mesos."
 				udp := tname + "._udp." + fname + ".mesos."
@@ -203,28 +222,28 @@ func (rg *RecordGenerator) ParseState(config Config) {
 				fmt.Println(tcpnof + " " + host)
 				fmt.Println(udpnof + " " + host)
 
-				if val, ok := rg.SRVs[tcp]; ok {
-					rg.SRVs[tcp] = append(val, host)
+				if val, ok := rg.RRs[tcp]; ok {
+					rg.RRs[tcp] = append(val, host)
 				} else {
-					rg.SRVs[tcp] = []string{host}
+					rg.RRs[tcp] = []string{host}
 				}
 
-				if val, ok := rg.SRVs[udp]; ok {
-					rg.SRVs[udp] = append(val, host)
+				if val, ok := rg.RRs[udp]; ok {
+					rg.RRs[udp] = append(val, host)
 				} else {
-					rg.SRVs[udp] = []string{host}
+					rg.RRs[udp] = []string{host}
 				}
 
-				if val, ok := rg.SRVs[tcpnof]; ok {
-					rg.SRVs[tcpnof] = append(val, host)
+				if val, ok := rg.RRs[tcpnof]; ok {
+					rg.RRs[tcpnof] = append(val, host)
 				} else {
-					rg.SRVs[tcpnof] = []string{host}
+					rg.RRs[tcpnof] = []string{host}
 				}
 
-				if val, ok := rg.SRVs[udpnof]; ok {
-					rg.SRVs[udpnof] = append(val, host)
+				if val, ok := rg.RRs[udpnof]; ok {
+					rg.RRs[udpnof] = append(val, host)
 				} else {
-					rg.SRVs[udpnof] = []string{host}
+					rg.RRs[udpnof] = []string{host}
 				}
 
 			}

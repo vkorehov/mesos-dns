@@ -48,9 +48,19 @@ func cleanWild(dom string) string {
 	}
 }
 
+// splitDomain splits dom into host and port pair
+func (res *Resolver) splitDomain(dom string) (host string, port int) {
+	s := strings.Split(dom, ":")
+	host = s[0]
+	port, _ = strconv.Atoi(s[1])
+	return host, port
+}
+
 // formatSRV returns the SRV resource record for target
 func (res *Resolver) formatSRV(name string, target string) *dns.SRV {
 	ttl := uint32(res.Config.TTL)
+
+	h, p := res.splitDomain(target)
 
 	return &dns.SRV{
 		Hdr: dns.RR_Header{
@@ -61,8 +71,8 @@ func (res *Resolver) formatSRV(name string, target string) *dns.SRV {
 		},
 		Priority: 0,
 		Weight:   0,
-		Port:     53,
-		Target:   target + ".",
+		Port:     uint16(p),
+		Target:   h + ".",
 	}
 }
 
@@ -70,7 +80,9 @@ func (res *Resolver) formatSRV(name string, target string) *dns.SRV {
 func (res *Resolver) formatAAAA(dom string, target string) (*dns.AAAA, error) {
 	ttl := uint32(res.Config.TTL)
 
-	ip, err := net.ResolveIPAddr("ip6", target)
+	h, _ := res.splitDomain(target)
+
+	ip, err := net.ResolveIPAddr("ip6", h)
 	if err != nil {
 		return nil, err
 	} else {
@@ -93,7 +105,9 @@ func (res *Resolver) formatAAAA(dom string, target string) (*dns.AAAA, error) {
 func (res *Resolver) formatA(dom string, target string) (*dns.A, error) {
 	ttl := uint32(res.Config.TTL)
 
-	ip, err := net.ResolveIPAddr("ip4", target)
+	h, _ := res.splitDomain(target)
+
+	ip, err := net.ResolveIPAddr("ip4", h)
 	if err != nil {
 		return nil, err
 	} else {
@@ -133,19 +147,20 @@ func (res *Resolver) HandleMesos(w dns.ResponseWriter, r *dns.Msg) {
 
 	m := new(dns.Msg)
 	m.SetReply(r)
+	m.Authoritative = true
+	m.RecursionAvailable = true
 
 	if qType == dns.TypeSRV {
-		fmt.Println(res.rs.SRVs[dom])
 
-		for i := 0; i < len(res.rs.SRVs[dom]); i++ {
-			rr := res.formatSRV(r.Question[0].Name, res.rs.SRVs[dom][i])
+		for i := 0; i < len(res.rs.RRs[dom]); i++ {
+			rr := res.formatSRV(r.Question[0].Name, res.rs.RRs[dom][i])
 			m.Answer = append(m.Answer, rr)
 		}
 
 	} else if qType == dns.TypeAAAA {
 
-		for i := 0; i < len(res.rs.SRVs[dom]); i++ {
-			rr, err := res.formatAAAA(dom, res.rs.SRVs[dom][i])
+		for i := 0; i < len(res.rs.RRs[dom]); i++ {
+			rr, err := res.formatAAAA(dom, res.rs.RRs[dom][i])
 			if err != nil {
 				fmt.Println(err)
 			} else {
@@ -155,8 +170,8 @@ func (res *Resolver) HandleMesos(w dns.ResponseWriter, r *dns.Msg) {
 
 	} else if qType == dns.TypeA {
 
-		for i := 0; i < len(res.rs.SRVs[dom]); i++ {
-			rr, err := res.formatA(dom, res.rs.SRVs[dom][i])
+		for i := 0; i < len(res.rs.RRs[dom]); i++ {
+			rr, err := res.formatA(dom, res.rs.RRs[dom][i])
 			if err != nil {
 				fmt.Println(err)
 			} else {
@@ -168,22 +183,22 @@ func (res *Resolver) HandleMesos(w dns.ResponseWriter, r *dns.Msg) {
 	} else if qType == dns.TypeANY {
 
 		// refactor me
-		for i := 0; i < len(res.rs.SRVs[dom]); i++ {
-			a, err := res.formatA(r.Question[0].Name, res.rs.SRVs[dom][i])
+		for i := 0; i < len(res.rs.RRs[dom]); i++ {
+			a, err := res.formatA(r.Question[0].Name, res.rs.RRs[dom][i])
 			if err != nil {
 				fmt.Println(err)
 			} else {
 				m.Answer = append(m.Answer, a)
 			}
 
-			aaaa, err2 := res.formatAAAA(dom, res.rs.SRVs[dom][i])
+			aaaa, err2 := res.formatAAAA(dom, res.rs.RRs[dom][i])
 			if err2 != nil {
 				fmt.Println(err2)
 			} else {
 				m.Answer = append(m.Answer, aaaa)
 			}
 
-			srv := res.formatSRV(dom, res.rs.SRVs[dom][i])
+			srv := res.formatSRV(dom, res.rs.RRs[dom][i])
 			m.Answer = append(m.Answer, srv)
 
 		}
