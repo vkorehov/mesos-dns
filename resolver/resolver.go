@@ -76,31 +76,6 @@ func (res *Resolver) formatSRV(name string, target string) *dns.SRV {
 	}
 }
 
-// formatAAAA returns the AAAA resource record for target
-func (res *Resolver) formatAAAA(dom string, target string) (*dns.AAAA, error) {
-	ttl := uint32(res.Config.TTL)
-
-	h, _ := res.splitDomain(target)
-
-	ip, err := net.ResolveIPAddr("ip6", h)
-	if err != nil {
-		return nil, err
-	} else {
-
-		a := ip.IP
-
-		return &dns.AAAA{
-			Hdr: dns.RR_Header{
-				Name:   dom,
-				Rrtype: dns.TypeAAAA,
-				Class:  dns.ClassINET,
-				Ttl:    ttl},
-			AAAA: a,
-		}, nil
-
-	}
-}
-
 // formatA returns the A resource record for target
 func (res *Resolver) formatA(dom string, target string) (*dns.A, error) {
 	ttl := uint32(res.Config.TTL)
@@ -140,7 +115,7 @@ func shuffleAnswers(answers []dns.RR) []dns.RR {
 
 // HandleMesos is a resolver request handler that responds to a resource
 // question with resource answer(s)
-// it can handle {A, AAAA, SRV, ANY}
+// it can handle {A, SRV, ANY}
 func (res *Resolver) HandleMesos(w dns.ResponseWriter, r *dns.Msg) {
 	dom := cleanWild(r.Question[0].Name)
 	qType := r.Question[0].Qtype
@@ -152,26 +127,15 @@ func (res *Resolver) HandleMesos(w dns.ResponseWriter, r *dns.Msg) {
 
 	if qType == dns.TypeSRV {
 
-		for i := 0; i < len(res.rs.RRs[dom]); i++ {
-			rr := res.formatSRV(r.Question[0].Name, res.rs.RRs[dom][i])
+		for i := 0; i < len(res.rs.SRVs[dom]); i++ {
+			rr := res.formatSRV(r.Question[0].Name, res.rs.SRVs[dom][i])
 			m.Answer = append(m.Answer, rr)
-		}
-
-	} else if qType == dns.TypeAAAA {
-
-		for i := 0; i < len(res.rs.RRs[dom]); i++ {
-			rr, err := res.formatAAAA(dom, res.rs.RRs[dom][i])
-			if err != nil {
-				fmt.Println(err)
-			} else {
-				m.Answer = append(m.Answer, rr)
-			}
 		}
 
 	} else if qType == dns.TypeA {
 
-		for i := 0; i < len(res.rs.RRs[dom]); i++ {
-			rr, err := res.formatA(dom, res.rs.RRs[dom][i])
+		for i := 0; i < len(res.rs.As[dom]); i++ {
+			rr, err := res.formatA(dom, res.rs.As[dom][i])
 			if err != nil {
 				fmt.Println(err)
 			} else {
@@ -183,24 +147,18 @@ func (res *Resolver) HandleMesos(w dns.ResponseWriter, r *dns.Msg) {
 	} else if qType == dns.TypeANY {
 
 		// refactor me
-		for i := 0; i < len(res.rs.RRs[dom]); i++ {
-			a, err := res.formatA(r.Question[0].Name, res.rs.RRs[dom][i])
+		for i := 0; i < len(res.rs.As[dom]); i++ {
+			a, err := res.formatA(r.Question[0].Name, res.rs.As[dom][i])
 			if err != nil {
 				fmt.Println(err)
 			} else {
 				m.Answer = append(m.Answer, a)
 			}
+		}
 
-			aaaa, err2 := res.formatAAAA(dom, res.rs.RRs[dom][i])
-			if err2 != nil {
-				fmt.Println(err2)
-			} else {
-				m.Answer = append(m.Answer, aaaa)
-			}
-
-			srv := res.formatSRV(dom, res.rs.RRs[dom][i])
+		for i := 0; i < len(res.rs.SRVs[dom]); i++ {
+			srv := res.formatSRV(dom, res.rs.SRVs[dom][i])
 			m.Answer = append(m.Answer, srv)
-
 		}
 
 	} else {

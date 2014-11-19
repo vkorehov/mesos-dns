@@ -26,6 +26,9 @@ type Config struct {
 	// Resolver port: port used to listen for slave requests (default 53)
 	Resolver int
 
+	//  Domain: name of the domain used (default "mesos", ie .mesos domain)
+	Domain string
+
 	// DNS server: IP address of the DNS server for forwarded accesses
 	DNS string
 }

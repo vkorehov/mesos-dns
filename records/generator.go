@@ -16,11 +16,13 @@ import (
 // rrs is a type of question names to resource records answers
 type rrs map[string][]string
 
-// Slaves is a mapping of id to hostname read in from state.json
-type Slaves []struct {
+type slave struct {
 	Id       string `json:"id"`
-	Hostname string `json:hostname"`
+	Hostname string `json:"hostname"`
 }
+
+// Slaves is a mapping of id to hostname read in from state.json
+type Slaves []slave
 
 // Resources holds our SRV ports
 type Resources struct {
@@ -55,7 +57,8 @@ type StateJSON struct {
 // prob. want to break apart
 // refactor me - prob. not needed
 type RecordGenerator struct {
-	RRs rrs
+	As   rrs
+	SRVs rrs
 	Slaves
 }
 
@@ -68,22 +71,6 @@ func (rg *RecordGenerator) hostBySlaveId(slaveId string) (string, error) {
 	}
 
 	return "", errors.New("not found")
-}
-
-// loadFromFile loads fake state.json from a config file
-// does not belong here - mv to test
-func (rg *RecordGenerator) loadFromFile() (sj StateJSON) {
-	b, err := ioutil.ReadFile("test/fake.json")
-	if err != nil {
-		fmt.Println("missing test data")
-	}
-
-	err = json.Unmarshal(b, &sj)
-	if err != nil {
-		fmt.Println(err)
-	}
-
-	return sj
 }
 
 // loadFromMaster loads state.json from mesos master
@@ -192,7 +179,8 @@ func (rg *RecordGenerator) ParseState(config Config) {
 
 	rg.Slaves = sj.Slaves
 
-	rg.RRs = make(rrs)
+	rg.SRVs = make(rrs)
+	rg.As = make(rrs)
 
 	f := sj.Frameworks
 
@@ -206,47 +194,49 @@ func (rg *RecordGenerator) ParseState(config Config) {
 			host, err := rg.hostBySlaveId(task.SlaveId)
 			if err == nil {
 				tname := stripUID(task.Name)
-				port := yankPort(task.Resources.Ports)
+				sport := yankPort(task.Resources.Ports)
 
 				// hack
-				host += ":" + port
+				host += ":" + sport
+				tail := fname + "." + config.Domain + "."
 
-				tcp := tname + "._tcp." + fname + ".mesos."
-				udp := tname + "._udp." + fname + ".mesos."
+				tcp := tname + "._tcp." + tail
+				udp := tname + "._udp." + tail
 
-				tcpnof := tname + "._tcp" + ".mesos."
-				udpnof := tname + "._udp" + ".mesos."
+				rg.insertRR(tcp, host, "SRV")
+				rg.insertRR(udp, host, "SRV")
 
-				fmt.Println(tcp + " " + host)
-				fmt.Println(udp + " " + host)
-				fmt.Println(tcpnof + " " + host)
-				fmt.Println(udpnof + " " + host)
-
-				if val, ok := rg.RRs[tcp]; ok {
-					rg.RRs[tcp] = append(val, host)
-				} else {
-					rg.RRs[tcp] = []string{host}
-				}
-
-				if val, ok := rg.RRs[udp]; ok {
-					rg.RRs[udp] = append(val, host)
-				} else {
-					rg.RRs[udp] = []string{host}
-				}
-
-				if val, ok := rg.RRs[tcpnof]; ok {
-					rg.RRs[tcpnof] = append(val, host)
-				} else {
-					rg.RRs[tcpnof] = []string{host}
-				}
-
-				if val, ok := rg.RRs[udpnof]; ok {
-					rg.RRs[udpnof] = append(val, host)
-				} else {
-					rg.RRs[udpnof] = []string{host}
-				}
+				arec := tname + "." + tail
+				arecnof := tname + "." + config.Domain + "."
+				rg.insertRR(arec, host, "A")
+				rg.insertRR(arecnof, host, "A")
 
 			}
+		}
+	}
+
+}
+
+// insertRR inserts host to name's map
+// refactor me
+func (rg *RecordGenerator) insertRR(name string, host string, rtype string) {
+
+	fmt.Println(name + " " + host)
+
+	if rtype == "A" {
+
+		if val, ok := rg.As[name]; ok {
+			rg.As[name] = append(val, host)
+		} else {
+			rg.As[name] = []string{host}
+		}
+
+	} else {
+
+		if val, ok := rg.SRVs[name]; ok {
+			rg.SRVs[name] = append(val, host)
+		} else {
+			rg.SRVs[name] = []string{host}
 		}
 	}
 

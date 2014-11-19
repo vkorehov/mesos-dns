@@ -24,7 +24,7 @@ func main() {
 	}()
 
 	// handle for everything in this domain...
-	dns.HandleFunc("mesos.", resolver.HandleMesos)
+	dns.HandleFunc(resolver.Config.Domain+".", resolver.HandleMesos)
 
 	go resolver.Serve("tcp")
 	go resolver.Serve("udp")

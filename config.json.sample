@@ -4,5 +4,6 @@
   "refresh": 60,
   "ttl": 60,
   "resolver": 53,
+  "domain": "mesos",
   "dns": "8.8.8.8"
 }
