@@ -91,14 +91,34 @@ __Benchmarking__
 
   https://github.com/jedisct1/dnsblast
 
-  tools/main.go
-
   osx:
     sudo sysctl -w kern.maxfiles=60000
     sudo sysctl -w kern.maxfilesperproc=60000
     sudo sysctl -w kern.ipc.somaxconn=60000
     ulimit -S -n 60000
 
+  linux:
+
+    edit /etc/sysctl.conf 
+      ```
+        fs.file-max = 65536
+      ```
+
+    edit /etc/security/limits.conf
+      ```
+      * soft nproc 65535
+      * hard nproc 65535
+      * soft nofile 65535
+      * hard nofile 65535
+      ```
+
+      ulimit -a should show the correct limits
+
+      ```
+        cd tools/main.go
+        go run main.go
+      ```
+       
 __WARNING__
 
 * no test coverage at the moment
