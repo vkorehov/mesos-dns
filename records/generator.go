@@ -190,11 +190,11 @@ func (rg *RecordGenerator) ParseState(config Config) {
 		return
 	}
 
-	rg.insertState(sj, config.Domain)
+	rg.InsertState(sj, config.Domain)
 }
 
-// insertState transforms a StateJSON into RecordGenerator RRs
-func (rg *RecordGenerator) insertState(sj StateJSON, domain string) error {
+// InsertState transforms a StateJSON into RecordGenerator RRs
+func (rg *RecordGenerator) InsertState(sj StateJSON, domain string) error {
 	rg.Slaves = sj.Slaves
 
 	rg.SRVs = make(rrs)
@@ -239,9 +239,6 @@ func (rg *RecordGenerator) insertState(sj StateJSON, domain string) error {
 // insertRR inserts host to name's map
 // refactor me
 func (rg *RecordGenerator) insertRR(name string, host string, rtype string) {
-
-	log.Println(name + " " + host)
-
 	if rtype == "A" {
 
 		if val, ok := rg.As[name]; ok {

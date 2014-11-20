@@ -73,7 +73,7 @@ func TestInsertState(t *testing.T) {
 	}
 
 	rg := RecordGenerator{}
-	rg.insertState(sj, "mesos")
+	rg.InsertState(sj, "mesos")
 
 	// test for 8 SRV names
 	if len(rg.SRVs) != 8 {
