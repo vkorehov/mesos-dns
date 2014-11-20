@@ -31,6 +31,9 @@ type Config struct {
 
 	// DNS server: IP address of the DNS server for forwarded accesses
 	DNS string
+
+	// Debug: turn on verbose logging
+	Debug bool
 }
 
 // SetConfig instantiates a Config struct read in from config.json

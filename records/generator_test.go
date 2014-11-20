@@ -1,7 +1,8 @@
 package records
 
 import (
-	// "fmt"
+	"encoding/json"
+	"io/ioutil"
 	"testing"
 )
 
@@ -55,4 +56,47 @@ func TestStripUID(t *testing.T) {
 	if name != "reviewbot" {
 		t.Error("not parsing task name")
 	}
+}
+
+// ensure we are parsing what we think we are
+func TestInsertState(t *testing.T) {
+	var sj StateJSON
+
+	b, err := ioutil.ReadFile("../factories/fake.json")
+	if err != nil {
+		t.Error("missing test data")
+	}
+
+	err = json.Unmarshal(b, &sj)
+	if err != nil {
+		t.Error(err)
+	}
+
+	rg := RecordGenerator{}
+	rg.insertState(sj, "mesos")
+
+	// test for 8 SRV names
+	if len(rg.SRVs) != 8 {
+		t.Error("not enough SRVs")
+	}
+
+	// test for 8 A names
+	if len(rg.As) != 8 {
+		t.Error("not enough As")
+	}
+
+	// ensure we find this SRV
+	rrs := rg.SRVs["liquor-store._tcp.marathon-0.6.0.mesos."]
+
+	// ensure there are 2 RRDATA answers for this SRV name
+	if len(rrs) != 2 {
+		t.Error("not enough SRV records")
+	}
+
+	// ensure we don't find this as a SRV record
+	rrs = rg.SRVs["liquor-store.marathon-0.6.0.mesos."]
+	if len(rrs) != 0 {
+		t.Error("not a proper SRV record")
+	}
+
 }

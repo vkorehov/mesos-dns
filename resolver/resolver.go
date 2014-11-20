@@ -121,9 +121,9 @@ func (res *Resolver) HandleMesos(w dns.ResponseWriter, r *dns.Msg) {
 	qType := r.Question[0].Qtype
 
 	m := new(dns.Msg)
-	m.SetReply(r)
 	m.Authoritative = true
 	m.RecursionAvailable = true
+	m.SetReply(r)
 
 	if qType == dns.TypeSRV {
 
@@ -161,11 +161,9 @@ func (res *Resolver) HandleMesos(w dns.ResponseWriter, r *dns.Msg) {
 			m.Answer = append(m.Answer, srv)
 		}
 
-	} else {
-
 	}
 
-	m.Authoritative = true
+	// shuffle answers
 	m.Answer = shuffleAnswers(m.Answer)
 
 	err := w.WriteMsg(m)

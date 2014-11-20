@@ -7,8 +7,8 @@ import (
 	"errors"
 	"fmt"
 	"io/ioutil"
+	"log"
 	"net/http"
-	"os"
 	"strconv"
 	"strings"
 )
@@ -147,6 +147,31 @@ func yankPort(ports string) string {
 	return strings.Split(lhs, "-")[0]
 }
 
+// findMaster tries each master and looks for the leader
+// if no leader responds it errors
+func (rg *RecordGenerator) findMaster(masters []string, port string) (StateJSON, error) {
+	var sj StateJSON
+
+	// try each listed mesos master before dying
+	for i := 0; i < len(masters); i++ {
+		sj, _ = rg.loadWrap(masters[i], port)
+
+		if sj.Leader == "" {
+			log.Println("not a leader - trying next one")
+
+			if len(masters)-1 == i {
+				return sj, errors.New("no master")
+			}
+
+		} else {
+			return sj, nil
+		}
+
+	}
+
+	return sj, nil
+}
+
 // ParseState parses a state.json from a mesos master
 // it sets the resource records map for the resolver
 // with the following format
@@ -156,27 +181,20 @@ func yankPort(ports string) string {
 // this will shudown if it can't connect to a mesos master
 func (rg *RecordGenerator) ParseState(config Config) {
 
-	var sj StateJSON
-
 	port := strconv.Itoa(config.Port)
 
 	// try each listed mesos master before dying
-	for i := 0; i < len(config.Masters); i++ {
-		sj, _ = rg.loadWrap(config.Masters[i], port)
-
-		if sj.Leader == "" {
-			fmt.Println("no leader - trying next one")
-
-			if len(config.Masters)-1 == i {
-				os.Exit(2)
-			}
-
-		} else {
-			break
-		}
-
+	sj, err := rg.findMaster(config.Masters, port)
+	if err != nil {
+		log.Println("no master")
+		return
 	}
 
+	rg.insertState(sj, config.Domain)
+}
+
+// insertState transforms a StateJSON into RecordGenerator RRs
+func (rg *RecordGenerator) insertState(sj StateJSON, domain string) error {
 	rg.Slaves = sj.Slaves
 
 	rg.SRVs = make(rrs)
@@ -198,7 +216,7 @@ func (rg *RecordGenerator) ParseState(config Config) {
 
 				// hack
 				host += ":" + sport
-				tail := fname + "." + config.Domain + "."
+				tail := fname + "." + domain + "."
 
 				tcp := tname + "._tcp." + tail
 				udp := tname + "._udp." + tail
@@ -207,7 +225,7 @@ func (rg *RecordGenerator) ParseState(config Config) {
 				rg.insertRR(udp, host, "SRV")
 
 				arec := tname + "." + tail
-				arecnof := tname + "." + config.Domain + "."
+				arecnof := tname + "." + domain + "."
 				rg.insertRR(arec, host, "A")
 				rg.insertRR(arecnof, host, "A")
 
@@ -215,13 +233,14 @@ func (rg *RecordGenerator) ParseState(config Config) {
 		}
 	}
 
+	return nil
 }
 
 // insertRR inserts host to name's map
 // refactor me
 func (rg *RecordGenerator) insertRR(name string, host string, rtype string) {
 
-	fmt.Println(name + " " + host)
+	log.Println(name + " " + host)
 
 	if rtype == "A" {
 

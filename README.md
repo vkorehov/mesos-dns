@@ -6,22 +6,33 @@ Initial design document at https://docs.google.com/a/mesosphere.io/document/d/1h
 
 __INSTALL__
 
+  ```shell
   go get github.com/miekg/dns
   cp config.json.sample config.json (adjust values as you see fit)
+  ```
 
 __INSTALL GO__
+  ```shell
+  sudo apt-get install git-core
   wget https://storage.googleapis.com/golang/go1.3.3.linux-amd64.tar.gz
   tar xzf go*
   sudo mv go /usr/local/.
+  ```
+
+  # puts this into ~/.profile
+  ```
   export PATH=$PATH:/usr/local/go/bin
   export GOROOT=/usr/local/go
   export PATH=$PATH:$GOROOT/bin
   export GOPATH=$HOME/go
+  ```
 
 __RUN__
 
   cp config.json.sample to config.json
+
   edit to your desires
+
   ensure that if you are running 53 you need to be root
 
   ./mesos-dns
@@ -76,6 +87,17 @@ __TODO__
 
 * general benchmarking
 
+__Benchmarking__
+
+  https://github.com/jedisct1/dnsblast
+
+  tools/main.go
+
+  osx:
+    sudo sysctl -w kern.maxfiles=60000
+    sudo sysctl -w kern.maxfilesperproc=60000
+    sudo sysctl -w kern.ipc.somaxconn=60000
+    ulimit -S -n 60000
 
 __WARNING__
 
