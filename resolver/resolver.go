@@ -52,8 +52,14 @@ func cleanWild(dom string) string {
 func (res *Resolver) splitDomain(dom string) (host string, port int) {
 	s := strings.Split(dom, ":")
 	host = s[0]
-	port, _ = strconv.Atoi(s[1])
-	return host, port
+
+	// As won't have ports
+	if len(s) == 1 {
+		return host, 0
+	} else {
+		port, _ = strconv.Atoi(s[1])
+		return host, port
+	}
 }
 
 // formatSRV returns the SRV resource record for target

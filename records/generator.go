@@ -109,6 +109,11 @@ func stripUID(taskName string) string {
 	return strings.Split(taskName, ".")[0]
 }
 
+// stripChronos removes the Chronos prefix from a taskName
+func stripChronos(taskName string) string {
+	return strings.Split(taskName, "ChronosTask:-")[1]
+}
+
 // leaderIP returns the ip for the mesos master
 func leaderIP(leader string) string {
 	pair := strings.Split(leader, "@")[1]
@@ -193,6 +198,24 @@ func (rg *RecordGenerator) ParseState(config Config) {
 	rg.InsertState(sj, config.Domain)
 }
 
+// cleanName sanitizes chronos/marathon names for dns
+func cleanName(tname string) string {
+	if strings.Contains(tname, "Chronos") {
+		tname = stripChronos(tname)
+	} else {
+		tname = stripUID(tname)
+	}
+
+	return stripInvalid(tname)
+}
+
+// stripInvalid removes any
+//
+// only removes spaces for now
+func stripInvalid(tname string) string {
+	return strings.Replace(tname, " ", "", -1)
+}
+
 // InsertState transforms a StateJSON into RecordGenerator RRs
 func (rg *RecordGenerator) InsertState(sj StateJSON, domain string) error {
 	rg.Slaves = sj.Slaves
@@ -211,18 +234,22 @@ func (rg *RecordGenerator) InsertState(sj StateJSON, domain string) error {
 
 			host, err := rg.hostBySlaveId(task.SlaveId)
 			if err == nil {
-				tname := stripUID(task.Name)
-				sport := yankPort(task.Resources.Ports)
-
-				// hack
-				host += ":" + sport
+				tname := cleanName(task.Name)
 				tail := fname + "." + domain + "."
 
-				tcp := tname + "._tcp." + tail
-				udp := tname + "._udp." + tail
+				// hack - what to do?
+				// SRVs have to have ports ?
+				if task.Resources.Ports != "" {
+					sport := yankPort(task.Resources.Ports)
+					host += ":" + sport
 
-				rg.insertRR(tcp, host, "SRV")
-				rg.insertRR(udp, host, "SRV")
+					tcp := tname + "._tcp." + tail
+					udp := tname + "._udp." + tail
+
+					rg.insertRR(tcp, host, "SRV")
+					rg.insertRR(udp, host, "SRV")
+
+				}
 
 				arec := tname + "." + tail
 				arecnof := tname + "." + domain + "."
@@ -239,6 +266,8 @@ func (rg *RecordGenerator) InsertState(sj StateJSON, domain string) error {
 // insertRR inserts host to name's map
 // refactor me
 func (rg *RecordGenerator) insertRR(name string, host string, rtype string) {
+	fmt.Println(name + " " + host)
+
 	if rtype == "A" {
 
 		if val, ok := rg.As[name]; ok {
