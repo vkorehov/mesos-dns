@@ -72,13 +72,14 @@ func TestShuffleAnswers(t *testing.T) {
 	}
 }
 
-func fakeDNS() (Resolver, error) {
+func fakeDNS(port int) (Resolver, error) {
 	var res Resolver
 	res.Config = records.Config{
-		Port:     8053,
+		Port:     5050,
 		TTL:      60,
-		Resolver: 8053,
+		Resolver: port,
 		Domain:   "mesos",
+		DNS:      records.GetLocalDNS(),
 	}
 
 	b, err := ioutil.ReadFile("../factories/fake.json")
@@ -119,7 +120,7 @@ func fakeQuery(dom string, rrHeader uint16, proto string) ([]dns.RR, error) {
 func TestHandler(t *testing.T) {
 	var msg []dns.RR
 
-	res, err := fakeDNS()
+	res, err := fakeDNS(8053)
 	if err != nil {
 		t.Error(err)
 	}
@@ -158,6 +159,30 @@ func TestHandler(t *testing.T) {
 	}
 
 	if len(msg) != 1 {
+		t.Error("not serving up A records")
+	}
+
+}
+
+func TestNonMesosHandler(t *testing.T) {
+	var msg []dns.RR
+
+	res, err := fakeDNS(8054)
+	if err != nil {
+		t.Error(err)
+	}
+
+	dns.HandleFunc(".", res.HandleNonMesos)
+	go res.Serve("udp")
+	go res.Serve("tcp")
+
+	// test A records
+	msg, err = fakeQuery("google.com", dns.TypeA, "udp")
+	if err != nil {
+		t.Error(err)
+	}
+
+	if len(msg) < 2 {
 		t.Error("not serving up A records")
 	}
 

@@ -49,14 +49,20 @@ func SetConfig() (c Config) {
 	}
 
 	if c.DNS == "" {
-		conf, err := dns.ClientConfigFromFile("/etc/resolv.conf")
-		if err != nil {
-			fmt.Fprintln(os.Stderr, err)
-			os.Exit(2)
-		}
-
-		c.DNS = conf.Servers[0]
+		c.DNS = GetLocalDNS()
 	}
 
 	return c
+}
+
+// GetLocalDNS returns the first nameserver in /etc/resolv.conf
+// used for out of mesos domain queries
+func GetLocalDNS() string {
+	conf, err := dns.ClientConfigFromFile("/etc/resolv.conf")
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(2)
+	}
+
+	return conf.Servers[0]
 }

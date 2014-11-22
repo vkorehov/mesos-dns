@@ -266,7 +266,7 @@ func (rg *RecordGenerator) InsertState(sj StateJSON, domain string) error {
 // insertRR inserts host to name's map
 // refactor me
 func (rg *RecordGenerator) insertRR(name string, host string, rtype string) {
-	fmt.Println(name + " " + host)
+	// fmt.Println(name + " " + host)
 
 	if rtype == "A" {
 
