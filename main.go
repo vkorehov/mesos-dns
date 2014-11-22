@@ -25,6 +25,7 @@ func main() {
 
 	// handle for everything in this domain...
 	dns.HandleFunc(resolver.Config.Domain+".", resolver.HandleMesos)
+	dns.HandleFunc(".", resolver.HandleNonMesos)
 
 	go resolver.Serve("tcp")
 	go resolver.Serve("udp")

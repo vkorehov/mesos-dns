@@ -14,28 +14,14 @@ import (
 )
 
 // resolveOut queries other nameserver
-// maybe don't need this - not in use
-func (res *Resolver) resolveOut(dom string) {
+func (res *Resolver) resolveOut(r *dns.Msg) (*dns.Msg, error) {
 
 	nameserver := res.Config.DNS + ":53"
-
-	qt := dns.TypeA
-	qc := uint16(dns.ClassINET)
-
 	c := new(dns.Client)
 	c.Net = "udp"
 
-	m := new(dns.Msg)
-	m.Question = make([]dns.Question, 1)
-	m.Question[0] = dns.Question{dns.Fqdn(dom), qt, qc}
-
-	in, rtt, err := c.Exchange(m, nameserver)
-	fmt.Println(rtt)
-	if err != nil {
-		fmt.Println(err)
-	}
-
-	fmt.Println(in)
+	in, _, err := c.Exchange(r, nameserver)
+	return in, err
 }
 
 // cleanWild strips any wildcards out thus mapping cleanly to the
@@ -117,6 +103,15 @@ func shuffleAnswers(answers []dns.RR) []dns.RR {
 	}
 
 	return answers
+}
+
+func (res *Resolver) HandleNonMesos(w dns.ResponseWriter, r *dns.Msg) {
+	m, err := res.resolveOut(r)
+
+	err = w.WriteMsg(m)
+	if err != nil {
+		fmt.Println(err)
+	}
 }
 
 // HandleMesos is a resolver request handler that responds to a resource
