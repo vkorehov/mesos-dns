@@ -3,13 +3,6 @@ mesos-dns
 
 DNS for service discovery with Mesos. 
 Refer to the [initial design document](https://docs.google.com/a/mesosphere.io/document/d/1h-ptANif4RZNWKTAJXsG0s4ZjfpY7GLrY2zRwmrIBAc/edit?usp=sharing) for details. 
- 
-__INSTALL__
-
-  ```shell
-  go get github.com/miekg/dns
-  cp config.json.sample config.json (adjust values as you see fit)
-  ```
 
 __INSTALL GO__
   ```shell
@@ -17,6 +10,13 @@ __INSTALL GO__
   wget https://storage.googleapis.com/golang/go1.3.3.linux-amd64.tar.gz
   tar xzf go*
   sudo mv go /usr/local/.
+  ```
+ 
+__INSTALL MESOS-DNS__
+
+  ```shell
+  go get github.com/miekg/dns
+  cp config.json.sample config.json (adjust values as you see fit)
   ```
 
   # puts this into ~/.profile
