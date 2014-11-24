@@ -11,20 +11,20 @@ __INSTALL GO__
   tar xzf go*
   sudo mv go /usr/local/.
   ```
- 
-__INSTALL MESOS-DNS__
-
-  ```shell
-  go get github.com/miekg/dns
-  cp config.json.sample config.json (adjust values as you see fit)
-  ```
-
+  
   # puts this into ~/.profile
   ```
   export PATH=$PATH:/usr/local/go/bin
   export GOROOT=/usr/local/go
   export PATH=$PATH:$GOROOT/bin
   export GOPATH=$HOME/go
+  ```
+ 
+__INSTALL MESOS-DNS__
+
+  ```shell
+  go get github.com/miekg/dns
+  cp config.json.sample config.json (adjust values as you see fit)
   ```
 
 __RUN__
