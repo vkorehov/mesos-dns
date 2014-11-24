@@ -25,18 +25,18 @@ __INSTALL MESOS-DNS__
   ```shell
   go get github.com/miekg/dns
   git clone git@github.com:mesosphere/mesos-dns.git
-  cd mesos-dns
-  cp config.json.sample config.json (adjust values as you see fit)
   ```
+__BUILD & CONFIGURE MESOS-DNS__
+
+  cd mesos-dns
+  go build -o mesos-dns main.go
+  cp config.json.sample config.json 
+  (adjust values as you see fit)
+
 
 __RUN__
 
-  cp config.json.sample to config.json
-
-  edit to your desires
-
   ensure that if you are running 53 you need to be root
-
   ./mesos-dns
 
 __TEST__
