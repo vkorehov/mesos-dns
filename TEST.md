@@ -85,3 +85,21 @@ __Benchmarking__
 __WARNING__
 
 * no test coverage at the moment
+
+
+__TESTING WITH MESOSAURUS__
+ ```
+git clone https://github.com/mesosphere/mesosaurus.git
+# if scala is not installed
+wget http://www.scala-lang.org/files/archive/scala-2.9.3.tgz && tar -xvf  scala-2.9.3.tgz && cd scala-2.9.3 && export PATH=`pwd`/bin:$PATH && export SCALA_HOME=`pwd`
+wget https://dl.bintray.com/sbt/native-packages/sbt/0.13.7/sbt-0.13.7.tgz
+tar xvf sbt-0.13.7.tgz 
+export PATH=`pwd`/sbt/bin:$PATH
+# build mesosaurus
+cd mesosaurus/task
+make
+cd ..
+sbt compile
+# launches 10 tasks of 1000msec duration each
+sbt "run -tasks 10 -duration 1000 -arrival 200 -master 10.90.16.131:5050"
+ ```
