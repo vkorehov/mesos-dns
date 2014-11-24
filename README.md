@@ -10,10 +10,7 @@ __INSTALL GO__
   wget https://storage.googleapis.com/golang/go1.3.3.linux-amd64.tar.gz
   tar xzf go*
   sudo mv go /usr/local/.
-  ```
-  
   # puts this into ~/.profile
-  ```
   export PATH=$PATH:/usr/local/go/bin
   export GOROOT=/usr/local/go
   export PATH=$PATH:$GOROOT/bin
