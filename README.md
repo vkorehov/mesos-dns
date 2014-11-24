@@ -24,6 +24,8 @@ __INSTALL MESOS-DNS__
 
   ```shell
   go get github.com/miekg/dns
+  git clone git@github.com:mesosphere/mesos-dns.git
+  cd mesos-dns
   cp config.json.sample config.json (adjust values as you see fit)
   ```
 
