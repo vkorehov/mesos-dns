@@ -2,10 +2,11 @@ Testing Mesos-DNS
 =========
 
 See the README file for basic installation/compilation instructions. 
-
+Make sure that the port used by the DNS server (typically 53) is not blocked by a firewall rule. 
 
 __Manual Tests__
-
+``` 
+ sudo apt-get install dnsutils
 * test out A records:
 
   dig @127.0.0.1 -p 8053 testing._tcp.marathon-0.7.5.mesos A
@@ -32,6 +33,7 @@ __Manual Tests__
 
   dig @127.0.0.1 -p 8053 bob._tcp.marathon-0.7.5.mesos ANY
   dig @127.0.0.1 -p 8053 "bob._tcp.*.mesos" ANY
+``` 
 
 __other__
 
