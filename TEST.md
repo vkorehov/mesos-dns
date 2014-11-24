@@ -1,47 +1,8 @@
-mesos-dns
+Testing Mesos-DNS
 =========
 
-DNS and service discovery for Mesos.
-Initial design document at https://docs.google.com/a/mesosphere.io/document/d/1h-ptANif4RZNWKTAJXsG0s4ZjfpY7GLrY2zRwmrIBAc/edit?usp=sharing. 
+See the README file for basic installation/compilation instructions. 
 
-__INSTALL__
-
-  ```shell
-  go get github.com/miekg/dns
-  cp config.json.sample config.json (adjust values as you see fit)
-  ```
-
-__INSTALL GO__
-  ```shell
-  sudo apt-get install git-core
-  wget https://storage.googleapis.com/golang/go1.3.3.linux-amd64.tar.gz
-  tar xzf go*
-  sudo mv go /usr/local/.
-  ```
-
-  # puts this into ~/.profile
-  ```
-  export PATH=$PATH:/usr/local/go/bin
-  export GOROOT=/usr/local/go
-  export PATH=$PATH:$GOROOT/bin
-  export GOPATH=$HOME/go
-  ```
-
-__RUN__
-
-  cp config.json.sample to config.json
-
-  edit to your desires
-
-  ensure that if you are running 53 you need to be root
-
-  ./mesos-dns
-
-__TEST__
-
-  go test -v ./...
-
-  (no tests atm)
 
 __Manual Tests__
 
