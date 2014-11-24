@@ -35,9 +35,10 @@ __BUILD & CONFIGURE MESOS-DNS__
   ```
 
 __RUN__
-
-  ensure that if you are running 53 you need to be root
-  ./mesos-dns
+  ```
+  // root only needed if you are using port 53 (recommended)
+  sudo ./mesos-dns
+  ```
 
 __TEST__
 
