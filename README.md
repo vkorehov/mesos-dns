@@ -27,12 +27,12 @@ __INSTALL MESOS-DNS__
   git clone git@github.com:mesosphere/mesos-dns.git
   ```
 __BUILD & CONFIGURE MESOS-DNS__
-
+  ```
   cd mesos-dns
   go build -o mesos-dns main.go
   cp config.json.sample config.json 
   (adjust values as you see fit)
-
+  ```
 
 __RUN__
 
