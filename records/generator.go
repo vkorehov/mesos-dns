@@ -9,6 +9,7 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"regexp"
 	"strconv"
 	"strings"
 )
@@ -209,11 +210,16 @@ func cleanName(tname string) string {
 	return stripInvalid(tname)
 }
 
-// stripInvalid removes any
-//
-// only removes spaces for now
+// stripInvalid remove any non-valid hostname characters
 func stripInvalid(tname string) string {
-	return strings.Replace(tname, " ", "", -1)
+
+	reg, err := regexp.Compile("[^\\w-\\.]")
+	if err != nil {
+		log.Println(err)
+	}
+
+	s := reg.ReplaceAllString(tname, "")
+	return strings.Replace(s, "_", "", -1)
 }
 
 // InsertState transforms a StateJSON into RecordGenerator RRs

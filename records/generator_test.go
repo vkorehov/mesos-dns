@@ -58,6 +58,34 @@ func TestStripUID(t *testing.T) {
 	}
 }
 
+type invalidHosts struct {
+	host     string
+	expected string
+}
+
+func TestStripInvalid(t *testing.T) {
+
+	var tests = []invalidHosts{
+		{"host.com", "host.com"},
+		{"space space.com", "spacespace.com"},
+		{"blah-dash.com", "blah-dash.com"},
+		{"not$1234.com", "not1234.com"},
+		{"(@ host . com", "host.com"},
+	}
+
+	for _, pair := range tests {
+		url := stripInvalid(pair.host)
+		if url != pair.expected {
+			t.Error(
+				"For", pair.host,
+				"expected", pair.expected,
+				"got", url,
+			)
+		}
+	}
+
+}
+
 // ensure we are parsing what we think we are
 func TestInsertState(t *testing.T) {
 	var sj StateJSON
