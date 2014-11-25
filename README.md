@@ -28,7 +28,7 @@ __Build mesos-dns__
   (adjust values as you see fit)
   ```
 
-__RUN__
+__Run__
   ```
   // root only needed if you are using port 53 (recommended)
   sudo ./mesos-dns
