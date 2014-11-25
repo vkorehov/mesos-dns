@@ -1,15 +1,8 @@
 mesos-dns
 =========
 
-DNS and service discovery for Mesos.
-Initial design document at https://docs.google.com/a/mesosphere.io/document/d/1h-ptANif4RZNWKTAJXsG0s4ZjfpY7GLrY2zRwmrIBAc/edit?usp=sharing. 
-
-__INSTALL__
-
-  ```shell
-  go get github.com/miekg/dns
-  cp config.json.sample config.json (adjust values as you see fit)
-  ```
+DNS for service discovery with Mesos. 
+Refer to the [initial design document](https://docs.google.com/a/mesosphere.io/document/d/1h-ptANif4RZNWKTAJXsG0s4ZjfpY7GLrY2zRwmrIBAc/edit?usp=sharing) for details. 
 
 __INSTALL GO__
   ```shell
@@ -17,25 +10,32 @@ __INSTALL GO__
   wget https://storage.googleapis.com/golang/go1.3.3.linux-amd64.tar.gz
   tar xzf go*
   sudo mv go /usr/local/.
-  ```
-
   # puts this into ~/.profile
-  ```
   export PATH=$PATH:/usr/local/go/bin
   export GOROOT=/usr/local/go
   export PATH=$PATH:$GOROOT/bin
   export GOPATH=$HOME/go
   ```
+ 
+__INSTALL MESOS-DNS__
+
+  ```shell
+  go get github.com/miekg/dns
+  git clone git@github.com:mesosphere/mesos-dns.git
+  ```
+__BUILD & CONFIGURE MESOS-DNS__
+  ```
+  cd mesos-dns
+  go build -o mesos-dns main.go
+  cp config.json.sample config.json 
+  (adjust values as you see fit)
+  ```
 
 __RUN__
-
-  cp config.json.sample to config.json
-
-  edit to your desires
-
-  ensure that if you are running 53 you need to be root
-
-  ./mesos-dns
+  ```
+  // root only needed if you are using port 53 (recommended)
+  sudo ./mesos-dns
+  ```
 
 __TEST__
 
