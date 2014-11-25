@@ -47,6 +47,5 @@ __Run__
   sudo ./mesos-dns
   ```
 
-__WARNINGS__
-
-* no test coverage at the moment
+__Warnings__
+* make sure that mesos-dns is uses a port that is not blocked 
