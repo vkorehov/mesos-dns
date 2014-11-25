@@ -26,7 +26,7 @@ __Manual Tests__
   dig @127.0.0.1 -p 8053 "bob._tcp.*.mesos" ANY
 ``` 
 
-__Testing with ResPerf__
+__Testing with [ResPerf](http://linux.die.net/man/1/resperf)__
 ``` 
 wget ftp://ftp.nominum.com/pub/nominum/dnsperf/2.0.0.0/dnsperf-2.0.0.0-1-rhel-6-x86_64.tar.gz
 tar xzf dnsperf-2.0.0.0-1-rhel-6-x86_64.tar.gz
