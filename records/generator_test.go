@@ -75,13 +75,29 @@ func TestInsertState(t *testing.T) {
 	rg := RecordGenerator{}
 	rg.InsertState(sj, "mesos")
 
-	// test for 8 SRV names
-	if len(rg.SRVs) != 8 {
+	// ensure we are only collecting running tasks
+	_, ok := rg.SRVs["poseidon._tcp.marathon-0.6.0.mesos."]
+	if ok {
+		t.Error("should not find this not-running task - SRV record")
+	}
+
+	_, ok = rg.As["liquor-store.mesos."]
+	if !ok {
+		t.Error("should find this running task - A record")
+	}
+
+	_, ok = rg.As["poseidon.mesos."]
+	if ok {
+		t.Error("should not find this not-running task - A record")
+	}
+
+	// test for 6 SRV names
+	if len(rg.SRVs) != 6 {
 		t.Error("not enough SRVs")
 	}
 
-	// test for 8 A names
-	if len(rg.As) != 8 {
+	// test for 6 A names
+	if len(rg.As) != 6 {
 		t.Error("not enough As")
 	}
 

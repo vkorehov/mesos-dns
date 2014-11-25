@@ -233,7 +233,7 @@ func (rg *RecordGenerator) InsertState(sj StateJSON, domain string) error {
 			task := f[i].Tasks[x]
 
 			host, err := rg.hostBySlaveId(task.SlaveId)
-			if err == nil {
+			if err == nil && (task.State == "TASK_RUNNING") {
 				tname := cleanName(task.Name)
 				tail := fname + "." + domain + "."
 
