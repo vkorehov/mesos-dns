@@ -8,29 +8,20 @@ __Manual Tests__
 ``` 
  sudo apt-get install dnsutils
 * test out A records:
-
-  dig @127.0.0.1 -p 8053 testing._tcp.marathon-0.7.5.mesos A
-
-  dig @127.0.0.1 -p 8053 "testing._tcp.*.mesos" A
-
-  dig @127.0.0.1 -p 8053 google.com A
-  (don't support)
+  dig @127.0.0.1 -p 53 testing._tcp.marathon-0.7.5.mesos A
+  dig @127.0.0.1 -p 53 "testing._tcp.*.mesos" A
+  dig @127.0.0.1 -p 53 google.com A
 
 * test out AAAA records:
-
-  dig @127.0.0.1 -p 8053 testing._tcp.marathon-0.7.5.mesos AAAA
-
-  dig @127.0.0.1 -p 8053 "testing._tcp.*.mesos" AAAA
-
+  dig @127.0.0.1 -p 53 testing._tcp.marathon-0.7.5.mesos AAAA
+  dig @127.0.0.1 -p 53 "testing._tcp.*.mesos" AAAA
+  dig @127.0.0.1 -p 53 google.com AAAA
 
 * test out SRV records:
-
   dig @127.0.0.1 -p 8053 testing._tcp.marathon-0.7.5.mesos SRV
-
   dig @127.0.0.1 -p 8053 "testing._tcp.*.mesos" SRV
 
 * test out ANY records:
-
   dig @127.0.0.1 -p 8053 bob._tcp.marathon-0.7.5.mesos ANY
   dig @127.0.0.1 -p 8053 "bob._tcp.*.mesos" ANY
 ``` 
