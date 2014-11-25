@@ -4,7 +4,7 @@ mesos-dns
 DNS for service discovery with Mesos. 
 Refer to the [initial design document](https://docs.google.com/a/mesosphere.io/document/d/1h-ptANif4RZNWKTAJXsG0s4ZjfpY7GLrY2zRwmrIBAc/edit?usp=sharing) for details. 
 
-__INSTALL GO__
+__Install go__
   ```shell
   sudo apt-get install git-core
   wget https://storage.googleapis.com/golang/go1.3.3.linux-amd64.tar.gz
@@ -17,14 +17,11 @@ __INSTALL GO__
   export GOPATH=$HOME/go
   ```
  
-__INSTALL MESOS-DNS__
+__Build mesos-dns__
 
   ```shell
   go get github.com/miekg/dns
   git clone git@github.com:mesosphere/mesos-dns.git
-  ```
-__BUILD & CONFIGURE MESOS-DNS__
-  ```
   cd mesos-dns
   go build -o mesos-dns main.go
   cp config.json.sample config.json 
