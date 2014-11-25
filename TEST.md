@@ -26,6 +26,20 @@ __Manual Tests__
   dig @127.0.0.1 -p 8053 "bob._tcp.*.mesos" ANY
 ``` 
 
+__Testing with ResPerf__
+``` 
+wget ftp://ftp.nominum.com/pub/nominum/dnsperf/2.0.0.0/dnsperf-2.0.0.0-1-rhel-6-x86_64.tar.gz
+tar xzf dnsperf-2.0.0.0-1-rhel-6-x86_64.tar.gz
+sudo apt-get install alien
+alien -i dnsperf-2.0.0.0-1.el6.x86_64.rpm 
+export PATH=$PATH:/usr/local/nom/bin
+wget ftp://ftp.nominum.com/pub/nominum/dnsperf/data/queryfile-example-current.gz
+tar xzf queryfile-example-current.gz
+
+# attempt to issue 100 QPS for a rump-up of 10 seconds
+resperf -s10.117.207.42 -d queryfile-example-current  -m 100 -r 10
+``` 
+
 __other__
 
 * sample.config.json w/full examples
