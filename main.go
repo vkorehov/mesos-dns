@@ -4,6 +4,7 @@ import (
 	"github.com/mesosphere/mesos-dns/records"
 	"github.com/mesosphere/mesos-dns/resolver"
 	"github.com/miekg/dns"
+	"log"
 	"sync"
 	"time"
 )
@@ -24,12 +25,27 @@ func main() {
 	}()
 
 	// handle for everything in this domain...
-	dns.HandleFunc(resolver.Config.Domain+".", resolver.HandleMesos)
-	dns.HandleFunc(".", resolver.HandleNonMesos)
+	dns.HandleFunc(resolver.Config.Domain+".", panicRecover(resolver.HandleMesos))
+	dns.HandleFunc(".", panicRecover(resolver.HandleNonMesos))
 
 	go resolver.Serve("tcp")
 	go resolver.Serve("udp")
 
 	wg.Add(1)
 	wg.Wait()
+}
+
+func panicRecover(f func(w dns.ResponseWriter, r *dns.Msg)) func(w dns.ResponseWriter, r *dns.Msg) {
+	return func(w dns.ResponseWriter, r *dns.Msg) {
+		defer func() {
+			if rec := recover(); rec != nil {
+				m := new(dns.Msg)
+				m.SetReply(r)
+				m.SetRcode(r, 2)
+				_ = w.WriteMsg(m)
+				log.Println(rec)
+			}
+		}()
+		f(w, r)
+	}
 }
