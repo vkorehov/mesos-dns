@@ -21,8 +21,9 @@ __Build mesos-dns__
 
   ```shell
   go get github.com/miekg/dns
-  git clone git@github.com:mesosphere/mesos-dns.git
-  cd mesos-dns
+  go get github.com/mesosphere/mesos-dns
+  # git clone git@github.com:mesosphere/mesos-dns.git
+  cd $GOPATH/src/github.com/mesosphere/mesos-dns
   go build -o mesos-dns main.go
   ```
 
