@@ -42,6 +42,17 @@ __Configure mesos slaves__
   # add "nameserver <ip address of mesos-dns>" at the very beginning
   ```
 
+  You can use the exact same resolv.conf for both the dns server and the
+  mesos slave:
+  ```
+  domain c.buoyant-keel-783.internal.
+  search c.buoyant-keel-783.internal. 163602273704.google.internal. google.internal.
+
+  nameserver 10.128.208.110
+  nameserver 169.254.169.254
+  nameserver 10.0.0.1
+  ```
+
 __Run__
   ```shell
   // root only needed if you are using port 53 (recommended)
