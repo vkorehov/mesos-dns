@@ -269,14 +269,26 @@ func (rg *RecordGenerator) InsertState(sj StateJSON, domain string) error {
 	return nil
 }
 
+func stripHost(hostip string) string {
+	return strings.Split(hostip, ":")[0]
+}
+
 // insertRR inserts host to name's map
 // refactor me
 func (rg *RecordGenerator) insertRR(name string, host string, rtype string) {
-	// fmt.Println(name + " " + host)
+	log.Println(name + " " + host)
 
 	if rtype == "A" {
 
 		if val, ok := rg.As[name]; ok {
+
+			h := stripHost(host)
+			for _, b := range val {
+				if stripHost(b) == h {
+					return
+				}
+			}
+
 			rg.As[name] = append(val, host)
 		} else {
 			rg.As[name] = []string{host}
