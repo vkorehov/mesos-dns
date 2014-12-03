@@ -75,11 +75,10 @@ func TestShuffleAnswers(t *testing.T) {
 func fakeDNS(port int) (Resolver, error) {
 	var res Resolver
 	res.Config = records.Config{
-		Port:     5050,
-		TTL:      60,
-		Resolver: port,
-		Domain:   "mesos",
-		DNS:      records.GetLocalDNS(),
+		TTL:    60,
+		Port:   port,
+		Domain: "mesos",
+		DNS:    records.GetLocalDNS(),
 	}
 
 	b, err := ioutil.ReadFile("../factories/fake.json")
