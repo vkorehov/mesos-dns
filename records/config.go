@@ -11,29 +11,23 @@ import (
 // Config holds mesos dns configuration
 type Config struct {
 
-	// Mesos master(s): a list of IP addresses for one or more Mesos masters
+	// Mesos master(s): a list of IP:port/zk pairs for one or more Mesos masters
 	Masters []string
 
-	// Master port: the port number for accessing master state (default 5050)
-	Port int
-
 	// Refresh frequency: the frequency in seconds of regenerating records (default 60)
-	Refresh int
+	RefreshSeconds int
 
 	// TTL: the TTL value used for SRV and A records (default 60)
 	TTL int
 
 	// Resolver port: port used to listen for slave requests (default 53)
-	Resolver int
+	Port int
 
 	//  Domain: name of the domain used (default "mesos", ie .mesos domain)
 	Domain string
 
 	// DNS server: IP address of the DNS server for forwarded accesses
-	DNS string
-
-	// Debug: turn on verbose logging
-	Debug bool
+	DNS []string
 }
 
 // SetConfig instantiates a Config struct read in from config.json
@@ -48,7 +42,7 @@ func SetConfig() (c Config) {
 		fmt.Println(err)
 	}
 
-	if c.DNS == "" {
+	if len(c.DNS) == 0 {
 		c.DNS = GetLocalDNS()
 	}
 
@@ -57,12 +51,12 @@ func SetConfig() (c Config) {
 
 // GetLocalDNS returns the first nameserver in /etc/resolv.conf
 // used for out of mesos domain queries
-func GetLocalDNS() string {
+func GetLocalDNS() []string {
 	conf, err := dns.ClientConfigFromFile("/etc/resolv.conf")
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(2)
 	}
 
-	return conf.Servers[0]
+	return conf.Servers
 }

@@ -14,9 +14,14 @@ import (
 )
 
 // resolveOut queries other nameserver
+// randomly picks from the list that is not mesos
 func (res *Resolver) resolveOut(r *dns.Msg) (*dns.Msg, error) {
 
-	nameserver := res.Config.DNS + ":53"
+	rand.Seed(time.Now().UTC().UnixNano())
+	n := len(res.Config.DNS)
+	i := rand.Intn(n)
+
+	nameserver := res.Config.DNS[i] + ":53"
 	c := new(dns.Client)
 	c.Net = "udp"
 
@@ -177,7 +182,7 @@ func (res *Resolver) HandleMesos(w dns.ResponseWriter, r *dns.Msg) {
 func (res *Resolver) Serve(net string) {
 
 	server := &dns.Server{
-		Addr:       ":" + strconv.Itoa(res.Config.Resolver),
+		Addr:       ":" + strconv.Itoa(res.Config.Port),
 		Net:        net,
 		TsigSecret: nil}
 

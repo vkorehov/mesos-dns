@@ -1,10 +1,8 @@
 {
-  "masters": ["127.0.0.1", "127.0.0.1", "127.0.0.1"],
-  "port": 5050,
-  "refresh": 60,
+  "masters": ["127.0.0.1:5050"],
+  "refreshSeconds": 60,
   "ttl": 60,
-  "resolver": 53,
   "domain": "mesos",
-  "dns": "8.8.8.8",
-  "debug": true
+  "port": 8053,
+  "resolvers": ["8.8.8.8"]
 }

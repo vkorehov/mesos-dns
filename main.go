@@ -17,7 +17,7 @@ func main() {
 
 	// reload the first time
 	resolver.Reload()
-	ticker := time.NewTicker(time.Second * time.Duration(resolver.Config.Refresh))
+	ticker := time.NewTicker(time.Second * time.Duration(resolver.Config.RefreshSeconds))
 	go func() {
 		for _ = range ticker.C {
 			resolver.Reload()
