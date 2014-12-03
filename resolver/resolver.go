@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"github.com/mesosphere/mesos-dns/records"
 	"github.com/miekg/dns"
+	"log"
 	"math/rand"
 	"net"
 	"strconv"
@@ -13,14 +14,30 @@ import (
 	"time"
 )
 
+var co *dns.Conn
+
+const dnsTimeout time.Duration = 2000 * 1e9
+
+func (res *Resolver) SetupCon() {
+	nameserver := res.Config.DNS + ":53"
+	var err error
+	co = new(dns.Conn)
+	co.Conn, err = net.Dial("udp", nameserver)
+	if err != nil {
+		log.Println(err)
+	}
+}
+
 // resolveOut queries other nameserver
 func (res *Resolver) resolveOut(r *dns.Msg) (*dns.Msg, error) {
 
-	nameserver := res.Config.DNS + ":53"
-	c := new(dns.Client)
-	c.Net = "udp"
+	co.WriteMsg(r)
+	in, err := co.ReadMsg()
+	if err != nil {
+		log.Println("asdfa")
+		log.Println(err)
+	}
 
-	in, _, err := c.Exchange(r, nameserver)
 	return in, err
 }
 

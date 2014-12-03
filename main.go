@@ -5,6 +5,8 @@ import (
 	"github.com/mesosphere/mesos-dns/resolver"
 	"github.com/miekg/dns"
 	"log"
+	"runtime"
+	"strconv"
 	"sync"
 	"time"
 )
@@ -15,11 +17,16 @@ func main() {
 	var resolver resolver.Resolver
 	resolver.Config = records.SetConfig()
 
+	log.Println("num of goroutines" + strconv.Itoa(runtime.NumGoroutine()))
+
+	resolver.SetupCon()
+
 	// reload the first time
 	resolver.Reload()
 	ticker := time.NewTicker(time.Second * time.Duration(resolver.Config.Refresh))
 	go func() {
 		for _ = range ticker.C {
+			log.Println("num of goroutines" + strconv.Itoa(runtime.NumGoroutine()))
 			resolver.Reload()
 		}
 	}()
@@ -43,6 +50,8 @@ func panicRecover(f func(w dns.ResponseWriter, r *dns.Msg)) func(w dns.ResponseW
 				m.SetReply(r)
 				m.SetRcode(r, 2)
 				_ = w.WriteMsg(m)
+				log.Println("num of goroutines" + strconv.Itoa(runtime.NumGoroutine()))
+
 				log.Println(rec)
 			}
 		}()
