@@ -133,7 +133,7 @@ func TestHandler(t *testing.T) {
 	go res.Serve("tcp")
 
 	// wait for startup ? lame
-	time.Sleep(1000 * time.Millisecond)
+	time.Sleep(10 * time.Millisecond)
 
 	// test A records
 	msg, err = fakeQuery("chronos.mesos", dns.TypeA, "udp")
@@ -178,6 +178,9 @@ func TestNonMesosHandler(t *testing.T) {
 	dns.HandleFunc(".", res.HandleNonMesos)
 	go res.Serve("udp")
 	go res.Serve("tcp")
+
+	// wait for startup ? lame
+	time.Sleep(10 * time.Millisecond)
 
 	// test A records
 	msg, err = fakeQuery("google.com", dns.TypeA, "udp")
