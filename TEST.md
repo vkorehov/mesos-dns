@@ -108,3 +108,8 @@ sbt compile
 # launches 10 tasks of 1000msec duration each
 sbt "run -tasks 10 -duration 1000 -arrival 200 -master 10.90.16.131:5050"
  ```
+
+__Unit Testing__
+```
+go test -v ./...`
+```
