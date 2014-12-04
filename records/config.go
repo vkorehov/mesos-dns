@@ -28,7 +28,7 @@ type Config struct {
 	Domain string
 
 	// DNS server: IP address of the DNS server for forwarded accesses
-	DNS []string
+	Resolvers []string
 }
 
 // SetConfig instantiates a Config struct read in from config.json
@@ -43,8 +43,8 @@ func SetConfig() (c Config) {
 		logging.Error.Println(err)
 	}
 
-	if len(c.DNS) == 0 {
-		c.DNS = GetLocalDNS()
+	if len(c.Resolvers) == 0 {
+		c.Resolvers = GetLocalDNS()
 	}
 
 	return c

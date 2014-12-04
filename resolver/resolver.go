@@ -18,10 +18,10 @@ import (
 func (res *Resolver) resolveOut(r *dns.Msg) (*dns.Msg, error) {
 
 	rand.Seed(time.Now().UTC().UnixNano())
-	n := len(res.Config.DNS)
+	n := len(res.Config.Resolvers)
 	i := rand.Intn(n)
 
-	nameserver := res.Config.DNS[i] + ":53"
+	nameserver := res.Config.Resolvers[i] + ":53"
 	c := new(dns.Client)
 	c.Net = "udp"
 
