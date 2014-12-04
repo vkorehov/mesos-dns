@@ -107,7 +107,7 @@ func nonLocalAddies(cservers []string) []string {
 func GetLocalDNS() string {
 	conf, err := dns.ClientConfigFromFile("/etc/resolv.conf")
 	if err != nil {
-		logging.Error.Println(os.Stderr, err)
+		logging.Error.Println(err)
 		os.Exit(2)
 	}
 
