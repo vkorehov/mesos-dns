@@ -56,6 +56,15 @@ func TestStripUID(t *testing.T) {
 	if name != "reviewbot" {
 		t.Error("not parsing task name")
 	}
+
+	tname = "other.crap.dab7106f-7a9a-11e4-9ad0-56847afe9799"
+
+	name = stripUID(tname)
+
+	if name != "other.crap" {
+		t.Error("not parsing task name")
+	}
+
 }
 
 type invalidHosts struct {
