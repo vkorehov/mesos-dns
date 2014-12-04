@@ -3,7 +3,7 @@
 package resolver
 
 import (
-	"fmt"
+	"github.com/mesosphere/mesos-dns/logging"
 	"github.com/mesosphere/mesos-dns/records"
 	"github.com/miekg/dns"
 	"math/rand"
@@ -110,7 +110,7 @@ func (res *Resolver) HandleNonMesos(w dns.ResponseWriter, r *dns.Msg) {
 
 	err = w.WriteMsg(m)
 	if err != nil {
-		fmt.Println(err)
+		logging.Error.Println(err)
 	}
 }
 
@@ -138,7 +138,7 @@ func (res *Resolver) HandleMesos(w dns.ResponseWriter, r *dns.Msg) {
 		for i := 0; i < len(res.rs.As[dom]); i++ {
 			rr, err := res.formatA(dom, res.rs.As[dom][i])
 			if err != nil {
-				fmt.Println(err)
+				logging.Error.Println(err)
 			} else {
 				m.Answer = append(m.Answer, rr)
 			}
@@ -151,7 +151,7 @@ func (res *Resolver) HandleMesos(w dns.ResponseWriter, r *dns.Msg) {
 		for i := 0; i < len(res.rs.As[dom]); i++ {
 			a, err := res.formatA(r.Question[0].Name, res.rs.As[dom][i])
 			if err != nil {
-				fmt.Println(err)
+				logging.Error.Println(err)
 			} else {
 				m.Answer = append(m.Answer, a)
 			}
@@ -169,7 +169,7 @@ func (res *Resolver) HandleMesos(w dns.ResponseWriter, r *dns.Msg) {
 
 	err := w.WriteMsg(m)
 	if err != nil {
-		fmt.Println(err)
+		logging.Error.Println(err)
 	}
 }
 
@@ -183,7 +183,7 @@ func (res *Resolver) Serve(net string) {
 
 	err := server.ListenAndServe()
 	if err != nil {
-		fmt.Printf("Failed to setup "+net+" server: %s\n", err.Error())
+		logging.Error.Printf("Failed to setup "+net+" server: %s\n", err.Error())
 	}
 }
 

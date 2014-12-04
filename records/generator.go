@@ -5,9 +5,8 @@ package records
 import (
 	"encoding/json"
 	"errors"
-	"fmt"
+	"github.com/mesosphere/mesos-dns/logging"
 	"io/ioutil"
-	"log"
 	"net/http"
 	"regexp"
 	"strconv"
@@ -77,7 +76,7 @@ func (rg *RecordGenerator) hostBySlaveId(slaveId string) (string, error) {
 // loadFromMaster loads state.json from mesos master
 func (rg *RecordGenerator) loadFromMaster(ip string, port string) (sj StateJSON) {
 
-	fmt.Println("reloading using " + ip)
+	logging.Verbose.Println("reloading using " + ip)
 
 	// tls ?
 	url := "http://" + ip + ":" + port + "/master/state.json"
@@ -88,18 +87,18 @@ func (rg *RecordGenerator) loadFromMaster(ip string, port string) (sj StateJSON)
 	client := &http.Client{}
 	resp, err := client.Do(req)
 	if err != nil {
-		fmt.Println(err)
+		logging.Error.Println(err)
 	}
 	defer resp.Body.Close()
 
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		fmt.Println(err)
+		logging.Error.Println(err)
 	}
 
 	err = json.Unmarshal(body, &sj)
 	if err != nil {
-		fmt.Println(err)
+		logging.Error.Println(err)
 	}
 
 	return sj
@@ -166,7 +165,7 @@ func (rg *RecordGenerator) findMaster(masters []string, port string) (StateJSON,
 		sj, _ = rg.loadWrap(masters[i], port)
 
 		if sj.Leader == "" {
-			log.Println("not a leader - trying next one")
+			logging.Verbose.Println("not a leader - trying next one")
 
 			if len(masters)-1 == i {
 				return sj, errors.New("no master")
@@ -195,7 +194,7 @@ func (rg *RecordGenerator) ParseState(config Config) {
 	// try each listed mesos master before dying
 	sj, err := rg.findMaster(config.Masters, port)
 	if err != nil {
-		log.Println("no master")
+		logging.Error.Println("no master")
 		return
 	}
 
@@ -218,7 +217,7 @@ func stripInvalid(tname string) string {
 
 	reg, err := regexp.Compile("[^\\w-.\\.]")
 	if err != nil {
-		log.Println(err)
+		logging.Error.Println(err)
 	}
 
 	s := reg.ReplaceAllString(tname, "")
@@ -281,7 +280,7 @@ func stripHost(hostip string) string {
 // insertRR inserts host to name's map
 // refactor me
 func (rg *RecordGenerator) insertRR(name string, host string, rtype string) {
-	log.Println(name + " " + host)
+	logging.Verbose.Println(name + " " + host)
 
 	if rtype == "A" {
 
