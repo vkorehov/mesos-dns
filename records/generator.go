@@ -9,7 +9,6 @@ import (
 	"io/ioutil"
 	"net/http"
 	"regexp"
-	"strconv"
 	"strings"
 )
 
@@ -157,12 +156,17 @@ func yankPort(ports string) string {
 
 // findMaster tries each master and looks for the leader
 // if no leader responds it errors
-func (rg *RecordGenerator) findMaster(masters []string, port string) (StateJSON, error) {
+func (rg *RecordGenerator) findMaster(masters []string) (StateJSON, error) {
 	var sj StateJSON
 
 	// try each listed mesos master before dying
 	for i := 0; i < len(masters); i++ {
-		sj, _ = rg.loadWrap(masters[i], port)
+		ip, port, err := getProto(masters[i])
+		if err != nil {
+			log.Println(err)
+		}
+
+		sj, _ = rg.loadWrap(ip, port)
 
 		if sj.Leader == "" {
 			logging.Verbose.Println("not a leader - trying next one")
@@ -180,6 +184,16 @@ func (rg *RecordGenerator) findMaster(masters []string, port string) (StateJSON,
 	return sj, nil
 }
 
+// should be able to accept
+// ip:port
+// zk://host1:port1,host2:port2,.../path
+// zk://username:password@host1:port1,host2:port2,.../path
+// file:///path/to/file (where file contains one of the above)
+func getProto(pair string) (string, string, error) {
+	h := strings.Split(pair, ":")
+	return h[0], h[1], nil
+}
+
 // ParseState parses a state.json from a mesos master
 // it sets the resource records map for the resolver
 // with the following format
@@ -189,10 +203,8 @@ func (rg *RecordGenerator) findMaster(masters []string, port string) (StateJSON,
 // this will shudown if it can't connect to a mesos master
 func (rg *RecordGenerator) ParseState(config Config) {
 
-	port := strconv.Itoa(config.Port)
-
 	// try each listed mesos master before dying
-	sj, err := rg.findMaster(config.Masters, port)
+	sj, err := rg.findMaster(config.Masters)
 	if err != nil {
 		logging.Error.Println("no master")
 		return
