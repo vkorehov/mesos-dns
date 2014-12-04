@@ -163,7 +163,7 @@ func (rg *RecordGenerator) findMaster(masters []string) (StateJSON, error) {
 	for i := 0; i < len(masters); i++ {
 		ip, port, err := getProto(masters[i])
 		if err != nil {
-			log.Println(err)
+			logging.Error.Println(err)
 		}
 
 		sj, _ = rg.loadWrap(ip, port)

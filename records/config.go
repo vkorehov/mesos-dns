@@ -105,8 +105,5 @@ func GetLocalDNS() []string {
 		os.Exit(2)
 	}
 
-	non := nonLocalAddies(conf.Servers)
-
-	// for now choose the first non-local
-	return non[0]
+	return nonLocalAddies(conf.Servers)
 }
