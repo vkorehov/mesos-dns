@@ -105,8 +105,11 @@ func (rg *RecordGenerator) loadFromMaster(ip string, port string) (sj StateJSON)
 }
 
 // stripUID removes the UID from a taskName
+// this is a lil bit hacky - but task names can have periods
 func stripUID(taskName string) string {
-	return strings.Split(taskName, ".")[0]
+	s := strings.Split(taskName, ".")
+	l := s[0 : len(s)-1]
+	return strings.Join(l, ".")
 }
 
 // stripChronos removes the Chronos prefix from a taskName
@@ -225,12 +228,13 @@ func cleanName(tname string) string {
 // stripInvalid remove any non-valid hostname characters
 func stripInvalid(tname string) string {
 
-	reg, err := regexp.Compile("[^\\w-\\.]")
+	reg, err := regexp.Compile("[^\\w-.\\.]")
 	if err != nil {
 		log.Println(err)
 	}
 
 	s := reg.ReplaceAllString(tname, "")
+
 	return strings.Replace(s, "_", "", -1)
 }
 
@@ -252,6 +256,7 @@ func (rg *RecordGenerator) InsertState(sj StateJSON, domain string) error {
 
 			host, err := rg.hostBySlaveId(task.SlaveId)
 			if err == nil && (task.State == "TASK_RUNNING") {
+
 				tname := cleanName(task.Name)
 				tail := fname + "." + domain + "."
 
@@ -281,6 +286,10 @@ func (rg *RecordGenerator) InsertState(sj StateJSON, domain string) error {
 	return nil
 }
 
+func stripHost(hostip string) string {
+	return strings.Split(hostip, ":")[0]
+}
+
 // insertRR inserts host to name's map
 // refactor me
 func (rg *RecordGenerator) insertRR(name string, host string, rtype string) {
@@ -289,6 +298,14 @@ func (rg *RecordGenerator) insertRR(name string, host string, rtype string) {
 	if rtype == "A" {
 
 		if val, ok := rg.As[name]; ok {
+
+			h := stripHost(host)
+			for _, b := range val {
+				if stripHost(b) == h {
+					return
+				}
+			}
+
 			rg.As[name] = append(val, host)
 		} else {
 			rg.As[name] = []string{host}

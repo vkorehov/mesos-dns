@@ -56,6 +56,15 @@ func TestStripUID(t *testing.T) {
 	if name != "reviewbot" {
 		t.Error("not parsing task name")
 	}
+
+	tname = "other.crap.dab7106f-7a9a-11e4-9ad0-56847afe9799"
+
+	name = stripUID(tname)
+
+	if name != "other.crap" {
+		t.Error("not parsing task name")
+	}
+
 }
 
 type invalidHosts struct {
@@ -143,4 +152,21 @@ func TestInsertState(t *testing.T) {
 		t.Error("not a proper SRV record")
 	}
 
+}
+
+// ensure we only generate one A record for each host
+func TestNTasks(t *testing.T) {
+	rg := RecordGenerator{}
+	rg.SRVs = make(rrs)
+	rg.As = make(rrs)
+
+	rg.insertRR("blah.mesos", "10.0.0.1", "A")
+	rg.insertRR("blah.mesos", "10.0.0.1", "A")
+	rg.insertRR("blah.mesos", "10.0.0.2", "A")
+
+	k, _ := rg.As["blah.mesos"]
+
+	if len(k) != 2 {
+		t.Error("should only have 2 A records")
+	}
 }

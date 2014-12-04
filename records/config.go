@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"github.com/miekg/dns"
 	"io/ioutil"
+	"log"
+	"net"
 	"os"
 )
 
@@ -49,6 +51,56 @@ func SetConfig() (c Config) {
 	return c
 }
 
+// localAddies returns an array of local ipv4 addresses
+func localAddies() []string {
+	addies, err := net.InterfaceAddrs()
+	if err != nil {
+		log.Println(err)
+	}
+
+	bad := []string{}
+
+	for i := 0; i < len(addies); i++ {
+		ip, _, err := net.ParseCIDR(addies[i].String())
+		if err != nil {
+			log.Println(err)
+		}
+		t4 := ip.To4()
+		if t4 != nil {
+			bad = append(bad, t4.String())
+		}
+	}
+
+	for i := 0; i < len(bad); i++ {
+		log.Println(bad[i])
+	}
+
+	return bad
+}
+
+// nonLocalAddies only returns non-local ns entries
+func nonLocalAddies(cservers []string) []string {
+	bad := localAddies()
+
+	good := []string{}
+
+	for i := 0; i < len(cservers); i++ {
+		local := false
+		for x := 0; x < len(bad); x++ {
+			if cservers[i] == bad[x] {
+				local = true
+			}
+		}
+
+		if !local {
+			good = append(good, cservers[i])
+		}
+
+	}
+
+	return good
+}
+
 // GetLocalDNS returns the first nameserver in /etc/resolv.conf
 // used for out of mesos domain queries
 func GetLocalDNS() []string {
@@ -58,5 +110,8 @@ func GetLocalDNS() []string {
 		os.Exit(2)
 	}
 
-	return conf.Servers
+	non := nonLocalAddies(conf.Servers)
+
+	// for now choose the first non-local
+	return non[0]
 }
