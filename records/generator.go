@@ -103,19 +103,6 @@ func (rg *RecordGenerator) loadFromMaster(ip string, port string) (sj StateJSON)
 	return sj
 }
 
-// stripUID removes the UID from a taskName
-// this is a lil bit hacky - but task names can have periods
-func stripUID(taskName string) string {
-	s := strings.Split(taskName, ".")
-	l := s[0 : len(s)-1]
-	return strings.Join(l, ".")
-}
-
-// stripChronos removes the Chronos prefix from a taskName
-func stripChronos(taskName string) string {
-	return strings.Split(taskName, "ChronosTask:-")[1]
-}
-
 // leaderIP returns the ip for the mesos master
 func leaderIP(leader string) string {
 	pair := strings.Split(leader, "@")[1]
@@ -213,14 +200,8 @@ func (rg *RecordGenerator) ParseState(config Config) {
 	rg.InsertState(sj, config.Domain)
 }
 
-// cleanName sanitizes chronos/marathon names for dns
+// cleanName sanitizes invalid characters
 func cleanName(tname string) string {
-	if strings.Contains(tname, "Chronos") {
-		tname = stripChronos(tname)
-	} else {
-		tname = stripUID(tname)
-	}
-
 	return stripInvalid(tname)
 }
 

@@ -49,25 +49,6 @@ func TestLeaderIP(t *testing.T) {
 	}
 }
 
-func TestStripUID(t *testing.T) {
-	tname := "reviewbot.8c9b3434-615a-11e4-a088-c20493233aa5"
-
-	name := stripUID(tname)
-
-	if name != "reviewbot" {
-		t.Error("not parsing task name")
-	}
-
-	tname = "other.crap.dab7106f-7a9a-11e4-9ad0-56847afe9799"
-
-	name = stripUID(tname)
-
-	if name != "other.crap" {
-		t.Error("not parsing task name")
-	}
-
-}
-
 type invalidHosts struct {
 	host     string
 	expected string
