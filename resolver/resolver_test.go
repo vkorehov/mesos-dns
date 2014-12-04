@@ -2,6 +2,7 @@ package resolver
 
 import (
 	"encoding/json"
+	"github.com/mesosphere/mesos-dns/logging"
 	"github.com/mesosphere/mesos-dns/records"
 	"github.com/miekg/dns"
 	"io/ioutil"
@@ -73,12 +74,15 @@ func TestShuffleAnswers(t *testing.T) {
 }
 
 func fakeDNS(port int) (Resolver, error) {
+	logging.VerboseFlag = false
+	logging.SetupLogs()
+
 	var res Resolver
 	res.Config = records.Config{
-		TTL:    60,
-		Port:   port,
-		Domain: "mesos",
-		DNS:    records.GetLocalDNS(),
+		TTL:       60,
+		Port:      port,
+		Domain:    "mesos",
+		Resolvers: records.GetLocalDNS(),
 	}
 
 	b, err := ioutil.ReadFile("../factories/fake.json")

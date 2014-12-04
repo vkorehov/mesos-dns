@@ -2,6 +2,7 @@ package records
 
 import (
 	"encoding/json"
+	"github.com/mesosphere/mesos-dns/logging"
 	"io/ioutil"
 	"testing"
 )
@@ -97,6 +98,9 @@ func TestStripInvalid(t *testing.T) {
 
 // ensure we are parsing what we think we are
 func TestInsertState(t *testing.T) {
+	logging.VerboseFlag = false
+	logging.SetupLogs()
+
 	var sj StateJSON
 
 	b, err := ioutil.ReadFile("../factories/fake.json")
