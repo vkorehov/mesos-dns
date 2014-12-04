@@ -1,18 +1,27 @@
 package main
 
 import (
+	"flag"
+	"github.com/mesosphere/mesos-dns/logging"
 	"github.com/mesosphere/mesos-dns/records"
 	"github.com/mesosphere/mesos-dns/resolver"
 	"github.com/miekg/dns"
-	"log"
 	"sync"
 	"time"
 )
 
+// init provies daemon flags
+func init() {
+	flag.BoolVar(&logging.VerboseFlag, "v", false, "increase the verbosity level")
+}
+
 func main() {
 	var wg sync.WaitGroup
-
 	var resolver resolver.Resolver
+
+	flag.Parse()
+	logging.SetupLogs()
+
 	resolver.Config = records.SetConfig()
 
 	// reload the first time
@@ -43,7 +52,7 @@ func panicRecover(f func(w dns.ResponseWriter, r *dns.Msg)) func(w dns.ResponseW
 				m.SetReply(r)
 				m.SetRcode(r, 2)
 				_ = w.WriteMsg(m)
-				log.Println(rec)
+				logging.Error.Println(rec)
 			}
 		}()
 		f(w, r)

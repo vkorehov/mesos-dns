@@ -2,10 +2,9 @@ package records
 
 import (
 	"encoding/json"
-	"fmt"
+	"github.com/mesosphere/mesos-dns/logging"
 	"github.com/miekg/dns"
 	"io/ioutil"
-	"log"
 	"net"
 	"os"
 )
@@ -42,12 +41,12 @@ type Config struct {
 func SetConfig() (c Config) {
 	b, err := ioutil.ReadFile("config.json")
 	if err != nil {
-		fmt.Println("missing config")
+		logging.Error.Println("missing config")
 	}
 
 	err = json.Unmarshal(b, &c)
 	if err != nil {
-		fmt.Println(err)
+		logging.Error.Println(err)
 	}
 
 	if c.DNS == "" {
@@ -61,7 +60,7 @@ func SetConfig() (c Config) {
 func localAddies() []string {
 	addies, err := net.InterfaceAddrs()
 	if err != nil {
-		log.Println(err)
+		logging.Error.Println(err)
 	}
 
 	bad := []string{}
@@ -69,16 +68,12 @@ func localAddies() []string {
 	for i := 0; i < len(addies); i++ {
 		ip, _, err := net.ParseCIDR(addies[i].String())
 		if err != nil {
-			log.Println(err)
+			logging.Error.Println(err)
 		}
 		t4 := ip.To4()
 		if t4 != nil {
 			bad = append(bad, t4.String())
 		}
-	}
-
-	for i := 0; i < len(bad); i++ {
-		log.Println(bad[i])
 	}
 
 	return bad
@@ -112,7 +107,7 @@ func nonLocalAddies(cservers []string) []string {
 func GetLocalDNS() string {
 	conf, err := dns.ClientConfigFromFile("/etc/resolv.conf")
 	if err != nil {
-		fmt.Fprintln(os.Stderr, err)
+		logging.Error.Println(os.Stderr, err)
 		os.Exit(2)
 	}
 
