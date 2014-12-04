@@ -144,3 +144,20 @@ func TestInsertState(t *testing.T) {
 	}
 
 }
+
+// ensure we only generate one A record for each host
+func TestNTasks(t *testing.T) {
+	rg := RecordGenerator{}
+	rg.SRVs = make(rrs)
+	rg.As = make(rrs)
+
+	rg.insertRR("blah.mesos", "10.0.0.1", "A")
+	rg.insertRR("blah.mesos", "10.0.0.1", "A")
+	rg.insertRR("blah.mesos", "10.0.0.2", "A")
+
+	k, _ := rg.As["blah.mesos"]
+
+	if len(k) != 2 {
+		t.Error("should only have 2 A records")
+	}
+}
