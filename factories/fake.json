@@ -173,7 +173,7 @@
                     "executor_id": "",
                     "framework_id": "20140703-014514-3041283216-5050-5348-0000",
                     "id": "liquor-store.b8db9f73-562f-11e4-a088-c20493233aa5",
-                    "name": "liquor-store.b8db9f73-562f-11e4-a088-c20493233aa5",
+                    "name": "liquor-store",
                     "resources": {
                         "cpus": 1,
                         "disk": 0,
@@ -193,7 +193,7 @@
                     "executor_id": "",
                     "framework_id": "20140703-014514-3041283216-5050-5348-0000",
                     "id": "liquor-store.b71166c1-562f-11e4-a088-c20493233aa5",
-                    "name": "liquor-store.b71166c1-562f-11e4-a088-c20493233aa5",
+                    "name": "liquor-store",
                     "resources": {
                         "cpus": 1,
                         "disk": 0,
@@ -213,7 +213,7 @@
                     "executor_id": "",
                     "framework_id": "20140703-014514-3041283216-5050-5348-0000",
                     "id": "chronos.49b91a9a-3dda-11e4-a088-c20493233aa5",
-                    "name": "chronos.49b91a9a-3dda-11e4-a088-c20493233aa5",
+                    "name": "chronos",
                     "resources": {
                         "cpus": 0.1,
                         "disk": 0,
@@ -233,7 +233,7 @@
                     "executor_id": "",
                     "framework_id": "20140703-014514-3041283216-5050-5348-0000",
                     "id": "reviewbot.8c9b3434-615a-11e4-a088-c20493233aa5",
-                    "name": "reviewbot.8c9b3434-615a-11e4-a088-c20493233aa5",
+                    "name": "reviewbot",
                     "resources": {
                         "cpus": 0.1,
                         "disk": 0,
