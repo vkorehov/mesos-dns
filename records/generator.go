@@ -246,8 +246,8 @@ func (rg *RecordGenerator) InsertState(sj StateJSON, domain string) error {
 					sport := yankPort(task.Resources.Ports)
 					host += ":" + sport
 
-					tcp := tname + "._tcp." + tail
-					udp := tname + "._udp." + tail
+					tcp := "_" + tname + "._tcp." + tail
+					udp := "_" + tname + "._udp." + tail
 
 					rg.insertRR(tcp, host, "SRV")
 					rg.insertRR(udp, host, "SRV")
