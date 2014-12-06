@@ -98,7 +98,7 @@ func TestInsertState(t *testing.T) {
 	rg.InsertState(sj, "mesos")
 
 	// ensure we are only collecting running tasks
-	_, ok := rg.SRVs["poseidon._tcp.marathon-0.6.0.mesos."]
+	_, ok := rg.SRVs["_poseidon._tcp.marathon-0.6.0.mesos."]
 	if ok {
 		t.Error("should not find this not-running task - SRV record")
 	}
@@ -124,7 +124,7 @@ func TestInsertState(t *testing.T) {
 	}
 
 	// ensure we find this SRV
-	rrs := rg.SRVs["liquor-store._tcp.marathon-0.6.0.mesos."]
+	rrs := rg.SRVs["_liquor-store._tcp.marathon-0.6.0.mesos."]
 
 	// ensure there are 2 RRDATA answers for this SRV name
 	if len(rrs) != 2 {
@@ -132,7 +132,7 @@ func TestInsertState(t *testing.T) {
 	}
 
 	// ensure we don't find this as a SRV record
-	rrs = rg.SRVs["liquor-store.marathon-0.6.0.mesos."]
+	rrs = rg.SRVs["_liquor-store.marathon-0.6.0.mesos."]
 	if len(rrs) != 0 {
 		t.Error("not a proper SRV record")
 	}
@@ -142,7 +142,6 @@ func TestInsertState(t *testing.T) {
 // ensure we only generate one A record for each host
 func TestNTasks(t *testing.T) {
 	rg := RecordGenerator{}
-	rg.SRVs = make(rrs)
 	rg.As = make(rrs)
 
 	rg.insertRR("blah.mesos", "10.0.0.1", "A")

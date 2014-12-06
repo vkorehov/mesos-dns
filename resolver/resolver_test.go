@@ -146,7 +146,7 @@ func TestHandler(t *testing.T) {
 	}
 
 	// test SRV record
-	msg, err = fakeQuery("liquor-store._udp.marathon-0.6.0.mesos.", dns.TypeSRV, "udp")
+	msg, err = fakeQuery("_liquor-store._udp.marathon-0.6.0.mesos.", dns.TypeSRV, "udp")
 	if err != nil {
 		t.Error(err)
 	}
