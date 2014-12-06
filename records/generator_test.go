@@ -103,12 +103,12 @@ func TestInsertState(t *testing.T) {
 		t.Error("should not find this not-running task - SRV record")
 	}
 
-	_, ok = rg.As["liquor-store.mesos."]
+	_, ok = rg.As["liquor-store.marathon-0.6.0.mesos."]
 	if !ok {
 		t.Error("should find this running task - A record")
 	}
 
-	_, ok = rg.As["poseidon.mesos."]
+	_, ok = rg.As["poseidon.marathon-0.6.0.mesos."]
 	if ok {
 		t.Error("should not find this not-running task - A record")
 	}
@@ -118,8 +118,8 @@ func TestInsertState(t *testing.T) {
 		t.Error("not enough SRVs")
 	}
 
-	// test for 6 A names
-	if len(rg.As) != 6 {
+	// test for 3 A names
+	if len(rg.As) != 3 {
 		t.Error("not enough As")
 	}
 
