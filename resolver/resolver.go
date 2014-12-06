@@ -3,6 +3,7 @@
 package resolver
 
 import (
+	"errors"
 	"github.com/mesosphere/mesos-dns/logging"
 	"github.com/mesosphere/mesos-dns/records"
 	"github.com/miekg/dns"
@@ -15,17 +16,24 @@ import (
 
 // resolveOut queries other nameserver
 // randomly picks from the list that is not mesos
-func (res *Resolver) resolveOut(r *dns.Msg) (*dns.Msg, error) {
+func (res *Resolver) resolveOut(r *dns.Msg, nameserver string) (*dns.Msg, error) {
+	var in *dns.Msg
+	var err error
 
-	rand.Seed(time.Now().UTC().UnixNano())
-	n := len(res.Config.Resolvers)
-	i := rand.Intn(n)
+	defer func() {
+		if r := recover(); r != nil {
+			in = nil
+			// clobbering our error for now
+			err = errors.New("connection problem")
+		}
+	}()
 
-	nameserver := res.Config.Resolvers[i] + ":53"
 	c := new(dns.Client)
 	c.Net = "udp"
 
-	in, _, err := c.Exchange(r, nameserver)
+	logging.Verbose.Println("using " + nameserver)
+
+	in, _, err = c.Exchange(r, nameserver)
 	return in, err
 }
 
@@ -110,8 +118,22 @@ func shuffleAnswers(answers []dns.RR) []dns.RR {
 	return answers
 }
 
+// HandleNonMesos makes non-mesos queries
 func (res *Resolver) HandleNonMesos(w dns.ResponseWriter, r *dns.Msg) {
-	m, err := res.resolveOut(r)
+	var err error
+	var m *dns.Msg
+
+	for i := 0; i < len(res.Config.Resolvers); i++ {
+		nameserver := res.Config.Resolvers[i] + ":53"
+		m, err = res.resolveOut(r, nameserver)
+		if err == nil {
+			break
+		}
+	}
+
+	if err != nil {
+		logging.Error.Println(err)
+	}
 
 	err = w.WriteMsg(m)
 	if err != nil {
