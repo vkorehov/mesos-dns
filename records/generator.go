@@ -255,9 +255,7 @@ func (rg *RecordGenerator) InsertState(sj StateJSON, domain string) error {
 				}
 
 				arec := tname + "." + tail
-				arecnof := tname + "." + domain + "."
 				rg.insertRR(arec, host, "A")
-				rg.insertRR(arecnof, host, "A")
 
 			}
 		}

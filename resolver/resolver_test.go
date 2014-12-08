@@ -136,7 +136,7 @@ func TestHandler(t *testing.T) {
 	time.Sleep(10 * time.Millisecond)
 
 	// test A records
-	msg, err = fakeQuery("chronos.mesos", dns.TypeA, "udp")
+	msg, err = fakeQuery("chronos.marathon-0.6.0.mesos.", dns.TypeA, "udp")
 	if err != nil {
 		t.Error(err)
 	}
@@ -156,7 +156,7 @@ func TestHandler(t *testing.T) {
 	}
 
 	// test tcp
-	msg, err = fakeQuery("chronos.mesos", dns.TypeA, "tcp")
+	msg, err = fakeQuery("chronos.marathon-0.6.0.mesos.", dns.TypeA, "tcp")
 	if err != nil {
 		t.Error(err)
 	}
