@@ -48,23 +48,20 @@ __other__
 * test task in test/testing.sh
   cd /home/jclouds && ./testing.sh
 
-__TODO__
 
-* test GCE currently responds to dig/nslookup but host system currently
-  is not using resource records served up by the server
+__Performance__
 
-* general benchmarking
-
-__Benchmarking__
-
-  https://github.com/jedisct1/dnsblast
+Mesos-dns will comfortably scale to 8.5K q/s for internal queries and 5k (fixme) q/s for external requests.
+If you wish to leverage more cores please adjust your maxfiles limits and use the GOMAXPROCS=N_cores environment variable.
 
   osx:
+  ```
     sudo sysctl -w kern.maxfiles=60000
     sudo sysctl -w kern.maxfilesperproc=60000
     sudo sysctl -w kern.ipc.somaxconn=60000
     ulimit -S -n 60000
-
+  ```
+  
   linux:
 
     edit /etc/sysctl.conf 
@@ -81,15 +78,8 @@ __Benchmarking__
       ```
 
       ulimit -a should show the correct limits
-
-      ```
-        cd tools/main.go
-        go run main.go
-      ```
        
-__WARNING__
 
-* no test coverage at the moment
 
 
 __TESTING WITH MESOSAURUS__
