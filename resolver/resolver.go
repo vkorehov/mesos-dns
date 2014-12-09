@@ -14,9 +14,13 @@ import (
 	"time"
 )
 
+var (
+	recurseCnt = 3
+)
+
 // resolveOut queries other nameserver
 // randomly picks from the list that is not mesos
-func (res *Resolver) resolveOut(r *dns.Msg, nameserver string) (*dns.Msg, error) {
+func (res *Resolver) resolveOut(r *dns.Msg, nameserver string, cnt int) (*dns.Msg, error) {
 	var in *dns.Msg
 	var err error
 
@@ -31,9 +35,21 @@ func (res *Resolver) resolveOut(r *dns.Msg, nameserver string) (*dns.Msg, error)
 	c := new(dns.Client)
 	c.Net = "udp"
 
-	logging.Verbose.Println("using " + nameserver)
-
 	in, _, err = c.Exchange(r, nameserver)
+
+	// recurse
+	if len(in.Answer) == 0 && !in.MsgHdr.Authoritative && len(in.Ns) > 0 {
+
+		if cnt > 0 {
+
+			if soa, ok := (in.Ns[0]).(*dns.SOA); ok {
+				logging.Verbose.Println("recursing ns " + soa.Ns)
+				return res.resolveOut(r, soa.Ns+":53", cnt-1)
+			}
+		}
+
+	}
+
 	return in, err
 }
 
@@ -125,7 +141,7 @@ func (res *Resolver) HandleNonMesos(w dns.ResponseWriter, r *dns.Msg) {
 
 	for i := 0; i < len(res.Config.Resolvers); i++ {
 		nameserver := res.Config.Resolvers[i] + ":53"
-		m, err = res.resolveOut(r, nameserver)
+		m, err = res.resolveOut(r, nameserver, recurseCnt)
 		if err == nil {
 			break
 		}
