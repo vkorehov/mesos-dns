@@ -151,6 +151,13 @@ func (res *Resolver) HandleNonMesos(w dns.ResponseWriter, r *dns.Msg) {
 		logging.Error.Println(err)
 	}
 
+	// resolveOut returns nil Msg sometimes cause of perf
+	if m == nil {
+		m = new(dns.Msg)
+		m.SetReply(r)
+		m.SetRcode(r, 2)
+	}
+
 	err = w.WriteMsg(m)
 	if err != nil {
 		logging.Error.Println(err)
