@@ -21,16 +21,9 @@ var (
 // resolveOut queries other nameserver
 // randomly picks from the list that is not mesos
 func (res *Resolver) resolveOut(r *dns.Msg, nameserver string, cnt int) (*dns.Msg, error) {
+
 	var in *dns.Msg
 	var err error
-
-	defer func() {
-		if r := recover(); r != nil {
-			in = nil
-			// clobbering our error for now
-			err = errors.New("connection problem")
-		}
-	}()
 
 	c := new(dns.Client)
 	c.Net = "udp"
@@ -38,12 +31,15 @@ func (res *Resolver) resolveOut(r *dns.Msg, nameserver string, cnt int) (*dns.Ms
 	in, _, err = c.Exchange(r, nameserver)
 
 	// recurse
-	if len(in.Answer) == 0 && !in.MsgHdr.Authoritative && len(in.Ns) > 0 {
+	if in != nil && len(in.Answer) == 0 && !in.MsgHdr.Authoritative && len(in.Ns) > 0 {
+
+		if cnt == recurseCnt {
+			logging.CurLog.NonMesosRecursed += 1
+		}
 
 		if cnt > 0 {
 
 			if soa, ok := (in.Ns[0]).(*dns.SOA); ok {
-				logging.Verbose.Println("recursing ns " + soa.Ns)
 				return res.resolveOut(r, soa.Ns+":53", cnt-1)
 			}
 		}
@@ -156,6 +152,22 @@ func (res *Resolver) HandleNonMesos(w dns.ResponseWriter, r *dns.Msg) {
 		m = new(dns.Msg)
 		m.SetReply(r)
 		m.SetRcode(r, 2)
+		err = errors.New("nil msg")
+	}
+
+	// tracing info
+	logging.CurLog.NonMesosRequests += 1
+
+	if err != nil {
+		logging.Error.Println(err)
+		logging.CurLog.NonMesosFailed += 1
+	} else {
+
+		if len(m.Answer) == 0 {
+			logging.CurLog.NonMesosNXDomain += 1
+		}
+
+		logging.CurLog.NonMesosSuccess += 1
 	}
 
 	err = w.WriteMsg(m)
@@ -168,6 +180,8 @@ func (res *Resolver) HandleNonMesos(w dns.ResponseWriter, r *dns.Msg) {
 // question with resource answer(s)
 // it can handle {A, SRV, ANY}
 func (res *Resolver) HandleMesos(w dns.ResponseWriter, r *dns.Msg) {
+	var err error
+
 	dom := cleanWild(r.Question[0].Name)
 	qType := r.Question[0].Qtype
 
@@ -217,7 +231,20 @@ func (res *Resolver) HandleMesos(w dns.ResponseWriter, r *dns.Msg) {
 	// shuffle answers
 	m.Answer = shuffleAnswers(m.Answer)
 
-	err := w.WriteMsg(m)
+	// tracing info
+	logging.CurLog.MesosRequests += 1
+
+	if err != nil {
+		logging.CurLog.MesosFailed += 1
+	} else {
+		if len(m.Answer) == 0 {
+			logging.CurLog.MesosNXDomain += 1
+		}
+
+		logging.CurLog.MesosSuccess += 1
+	}
+
+	err = w.WriteMsg(m)
 	if err != nil {
 		logging.Error.Println(err)
 	}

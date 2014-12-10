@@ -13,6 +13,25 @@ var (
 	Error       *log.Logger
 )
 
+type LogOut struct {
+	MesosRequests    int
+	MesosSuccess     int
+	MesosNXDomain    int
+	MesosFailed      int
+	NonMesosRequests int
+	NonMesosSuccess  int
+	NonMesosNXDomain int
+	NonMesosFailed   int
+	NonMesosRecursed int
+}
+
+var CurLog LogOut
+
+// PrintCurLog prints out the current LogOut and then resets
+func PrintCurLog() {
+	Verbose.Printf("%+v\n", CurLog)
+}
+
 // setupLogs provides the following logs
 // Info = stdout
 // Verbose = optional verbosity
