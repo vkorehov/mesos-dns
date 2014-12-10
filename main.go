@@ -30,6 +30,7 @@ func main() {
 	go func() {
 		for _ = range ticker.C {
 			resolver.Reload()
+			logging.PrintCurLog()
 		}
 	}()
 
