@@ -25,24 +25,13 @@ func (res *Resolver) resolveOut(r *dns.Msg, nameserver string, cnt int) (*dns.Ms
 	var in *dns.Msg
 	var err error
 
-	defer func() {
-		if rec := recover(); rec != nil {
-			in = new(dns.Msg)
-			in.SetReply(r)
-			in.SetRcode(r, 2)
-
-			// clobbering our error for now
-			err = errors.New("connection problem")
-		}
-	}()
-
 	c := new(dns.Client)
 	c.Net = "udp"
 
 	in, _, err = c.Exchange(r, nameserver)
 
 	// recurse
-	if len(in.Answer) == 0 && !in.MsgHdr.Authoritative && len(in.Ns) > 0 {
+	if in != nil && len(in.Answer) == 0 && !in.MsgHdr.Authoritative && len(in.Ns) > 0 {
 
 		if cnt == recurseCnt {
 			logging.CurLog.NonMesosRecursed += 1
@@ -170,6 +159,7 @@ func (res *Resolver) HandleNonMesos(w dns.ResponseWriter, r *dns.Msg) {
 	logging.CurLog.NonMesosRequests += 1
 
 	if err != nil {
+		logging.Error.Println(err)
 		logging.CurLog.NonMesosFailed += 1
 	} else {
 
