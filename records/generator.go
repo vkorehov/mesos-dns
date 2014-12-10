@@ -75,8 +75,6 @@ func (rg *RecordGenerator) hostBySlaveId(slaveId string) (string, error) {
 // loadFromMaster loads state.json from mesos master
 func (rg *RecordGenerator) loadFromMaster(ip string, port string) (sj StateJSON) {
 
-	logging.Verbose.Println("reloading using " + ip)
-
 	// tls ?
 	url := "http://" + ip + ":" + port + "/master/state.json"
 
@@ -124,9 +122,11 @@ func (rg *RecordGenerator) loadWrap(ip string, port string) (StateJSON, error) {
 
 	}()
 
+	logging.Verbose.Println("reloading from master " + ip)
 	sj = rg.loadFromMaster(ip, port)
 
 	if rip := leaderIP(sj.Leader); rip != ip {
+		logging.Verbose.Println("master changed to " + ip)
 		sj = rg.loadFromMaster(rip, port)
 	}
 
