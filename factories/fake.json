@@ -34,7 +34,7 @@
         "webui_dir": "/usr/local/share/mesos/webui",
         "whitelist": "*",
         "work_dir": "/var/lib/mesos",
-        "zk": "zk://144.76.157.37:2181,144.76.157.36:2181,144.76.70.181:2181/mesos",
+        "zk": "zk://1.2.3.4:2181,1.2.3.5:2181,1.2.3.6:2181/mesos",
         "zk_session_timeout": "10secs"
     },
     "frameworks": [
@@ -113,8 +113,8 @@
                 {
                     "executor_id": "",
                     "framework_id": "20140703-014514-3041283216-5050-5348-0000",
-                    "id": "agora.a50a19f2-2d7a-11e4-b8df-d43d7edb01cd",
-                    "name": "agora.a50a19f2-2d7a-11e4-b8df-d43d7edb01cd",
+                    "id": "box01.a50a19f2-2d7a-11e4-b8df-d43d7edb01cd",
+                    "name": "box01.a50a19f2-2d7a-11e4-b8df-d43d7edb01cd",
                     "resources": {
                         "cpus": 1,
                         "disk": 0,
@@ -259,16 +259,16 @@
     "hostname": "socket.net",
     "id": "20140916-194712-631065744-5050-4798",
     "killed_tasks": 1,
-    "leader": "master@144.76.157.37:5050",
+    "leader": "master@1.2.3.4:5050",
     "log_dir": "/var/log/mesos",
     "lost_tasks": 0,
-    "pid": "master@144.76.157.37:5050",
+    "pid": "master@1.2.3.4:5050",
     "slaves": [
         {
             "attributes": {},
-            "hostname": "kt22.mesosphere.io",
+            "hostname": "some.host.com",
             "id": "20140916-194712-631065744-5050-4798-2",
-            "pid": "slave(1)@144.76.70.181:5051",
+            "pid": "slave(1)@1.2.3.6:5051",
             "registered_time": 1415029403.65675,
             "resources": {
                 "cpus": 8,
@@ -281,7 +281,7 @@
             "attributes": {},
             "hostname": "socket.net",
             "id": "20140803-125133-3041283216-5050-2410-0",
-            "pid": "slave(1)@144.76.157.37:5051",
+            "pid": "slave(1)@1.2.3.4:5051",
             "registered_time": 1414913537.33691,
             "reregistered_time": 1414913537.33692,
             "resources": {
@@ -295,7 +295,7 @@
             "attributes": {},
             "hostname": "google.com",
             "id": "20140827-000744-3041283216-5050-2116-1",
-            "pid": "slave(1)@144.76.157.36:5051",
+            "pid": "slave(1)@1.2.3.5:5051",
             "registered_time": 1414913537.19731,
             "reregistered_time": 1414913537.19735,
             "resources": {
