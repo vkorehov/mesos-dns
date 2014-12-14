@@ -70,22 +70,21 @@ You may also choose to install dnsmasq which can cache external queries.
 
 If you find yourself adjusting gomaxprocs you'll probably want to adjust the maxfiles limits on your operating system as well:
 
-  on osx:
+on osx:
   ```
     sudo sysctl -w kern.maxfiles=60000
     sudo sysctl -w kern.maxfilesperproc=60000
     sudo sysctl -w kern.ipc.somaxconn=60000
     ulimit -S -n 60000
   ```
-  
-  on linux:
-
-    edit /etc/sysctl.conf 
+ 
+on linux:
+edit /etc/sysctl.conf 
       ```
         fs.file-max = 65536
       ```
-
-    edit /etc/security/limits.conf
+      
+edit /etc/security/limits.conf
       ```
       * soft nproc 65535
       * hard nproc 65535
