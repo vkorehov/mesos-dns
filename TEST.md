@@ -80,22 +80,22 @@ on osx:
  
 on linux:
 edit /etc/sysctl.conf 
-      ```
+ ```
         fs.file-max = 65536
-      ```
+ ```
       
 edit /etc/security/limits.conf
-      ```
+```
       * soft nproc 65535
       * hard nproc 65535
       * soft nofile 65535
       * hard nofile 65535
-      ```
+```
 
 ulimit -a should show the correct limits, if not go ahead and adjust the ulimit in the shell that mesos-dns runs in via:
 
 ```
-ulimit -n 60000
+  ulimit -n 60000
 ```
 
 
