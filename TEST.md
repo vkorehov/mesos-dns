@@ -51,10 +51,26 @@ __other__
 
 __Performance__
 
-Mesos-dns will comfortably scale to 8.5K q/s for internal queries and 5k (fixme) q/s for external requests.
-If you wish to leverage more cores please adjust your maxfiles limits and use the GOMAXPROCS=N_cores environment variable.
+Mesos-dns will comfortably scale to 8.5K q/s for internal queries
+.
+If you wish to leverage more cores please adjust your maxfiles limits and use the GOMAXPROCS=N cores environment variable.
 
-  osx:
+Example:
+```
+  GOMAXPROCS=8 ./mesos-dns
+```
+
+A note on external queries. Many open recursors such as google's 8.8.8.8 will throttle your connection to a much lower number than what the server can actually handle.
+
+If you are experiencing dns request timeouts first thing to check is if it's internal or external requests. If external you might try using a different recursor or set of recursors:
+
+http://public-dns.tk/nameservers
+
+You may also choose to install dnsmasq which can cache external queries.
+
+If you find yourself adjusting gomaxprocs you'll probably want to adjust the maxfiles limits on your operating system as well:
+
+  on osx:
   ```
     sudo sysctl -w kern.maxfiles=60000
     sudo sysctl -w kern.maxfilesperproc=60000
@@ -62,7 +78,7 @@ If you wish to leverage more cores please adjust your maxfiles limits and use th
     ulimit -S -n 60000
   ```
   
-  linux:
+  on linux:
 
     edit /etc/sysctl.conf 
       ```
@@ -77,9 +93,11 @@ If you wish to leverage more cores please adjust your maxfiles limits and use th
       * hard nofile 65535
       ```
 
-      ulimit -a should show the correct limits
-       
+ulimit -a should show the correct limits, if not go ahead and adjust the ulimit in the shell that mesos-dns runs in via:
 
+```
+ulimit -n 60000
+```
 
 
 __TESTING WITH MESOSAURUS__
