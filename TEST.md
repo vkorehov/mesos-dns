@@ -98,6 +98,13 @@ ulimit -a should show the correct limits, if not go ahead and adjust the ulimit 
   ulimit -n 60000
 ```
 
+__Memory Usage__
+
+Go manages memory differently than what you might be used to. It will reserve a large chunk right off the bat (virt) but your (res) is much closer to reality of what is in use. Having said that, res is not even as precise as you might be used to. To get the true values you'll want to look at pprof - in particular the --inuse_space vs. --alloc_space . Allocated will probably be closer to RES than the actual in-use. The kernel is madvised for the difference.
+
+Also - each connection has it's own go-routine whose stack does not get released. It is re-used. This might be fixed in go 1.4.
+
+You can expect under load to see ~ >200M for RES.
 
 __TESTING WITH MESOSAURUS__
  ```
