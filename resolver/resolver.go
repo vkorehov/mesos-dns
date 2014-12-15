@@ -20,13 +20,13 @@ var (
 
 // resolveOut queries other nameserver
 // randomly picks from the list that is not mesos
-func (res *Resolver) resolveOut(r *dns.Msg, nameserver string, cnt int) (*dns.Msg, error) {
+func (res *Resolver) resolveOut(r *dns.Msg, nameserver string, proto string, cnt int) (*dns.Msg, error) {
 
 	var in *dns.Msg
 	var err error
 
 	c := new(dns.Client)
-	c.Net = "udp"
+	c.Net = proto
 
 	var t time.Duration = 5 * 1e9
 	if res.Config.Timeout != 0 {
@@ -49,7 +49,7 @@ func (res *Resolver) resolveOut(r *dns.Msg, nameserver string, cnt int) (*dns.Ms
 		if cnt > 0 {
 
 			if soa, ok := (in.Ns[0]).(*dns.SOA); ok {
-				return res.resolveOut(r, soa.Ns+":53", cnt-1)
+				return res.resolveOut(r, soa.Ns+":53", proto, cnt-1)
 			}
 		}
 
@@ -144,9 +144,14 @@ func (res *Resolver) HandleNonMesos(w dns.ResponseWriter, r *dns.Msg) {
 	var err error
 	var m *dns.Msg
 
+	proto := "udp"
+	if _, ok := w.RemoteAddr().(*net.TCPAddr); ok {
+		proto = "tcp"
+	}
+
 	for i := 0; i < len(res.Config.Resolvers); i++ {
 		nameserver := res.Config.Resolvers[i] + ":53"
-		m, err = res.resolveOut(r, nameserver, recurseCnt)
+		m, err = res.resolveOut(r, nameserver, proto, recurseCnt)
 		if err == nil {
 			break
 		}
