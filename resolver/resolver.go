@@ -28,6 +28,15 @@ func (res *Resolver) resolveOut(r *dns.Msg, nameserver string, cnt int) (*dns.Ms
 	c := new(dns.Client)
 	c.Net = "udp"
 
+	var t time.Duration = 5 * 1e9
+	if res.Config.Timeout != 0 {
+		t = time.Duration(int64(res.Config.Timeout * 1e9))
+	}
+
+	c.DialTimeout = t
+	c.ReadTimeout = t
+	c.WriteTimeout = t
+
 	in, _, err = c.Exchange(r, nameserver)
 
 	// recurse
@@ -144,6 +153,7 @@ func (res *Resolver) HandleNonMesos(w dns.ResponseWriter, r *dns.Msg) {
 	}
 
 	if err != nil {
+		logging.Error.Println(r.Question[0].Name)
 		logging.Error.Println(err)
 	}
 

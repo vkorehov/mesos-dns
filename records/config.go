@@ -29,6 +29,10 @@ type Config struct {
 
 	// DNS server: IP address of the DNS server for forwarded accesses
 	Resolvers []string
+
+	// Timeout is the default connect/read/write timeout for outbound
+	// queries
+	Timeout int
 }
 
 // SetConfig instantiates a Config struct read in from config.json
