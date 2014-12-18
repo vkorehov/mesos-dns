@@ -7,7 +7,7 @@ Refer to the [initial design document](https://docs.google.com/a/mesosphere.io/d
 __Install go__
   ```shell
   sudo apt-get install git-core
-  wget https://storage.googleapis.com/golang/go1.3.3.linux-amd64.tar.gz
+  wget https://storage.googleapis.com/golang/go1.4.linux-amd64.tar.gz
   tar xzf go*
   sudo mv go /usr/local/.
   # puts this into ~/.profile
