@@ -19,7 +19,7 @@ $ dig search.marathon.mesos
 ;; flags: qr aa rd ra; QUERY: 1, ANSWER: 1, AUTHORITY: 1, ADDITIONAL: 0
 
 ;; QUESTION SECTION:
-;task2.mesos.			IN	A
+;search.marathon.mesos.			IN	A
 
 ;; ANSWER SECTION:
 search.marathon.mesos.		60	IN	A	10.9.87.94
@@ -27,19 +27,19 @@ search.marathon.mesos.		60	IN	A	10.9.87.94
  
 ## SRV Records
 
-An SRV record associates a service name to a hostname and an IP port.  For task `task` launched by framework `framework`, Mesos-DNS generates an SRV record for service name `task.._protocol.framework.domain`, where `protocol` is `udp` or `tcp`. For example, other Mesos tasks can discover service `search` launch by the `marathon` framework with a lookup for lookup `_search._tcp.marathon.mesos`:
+An SRV record associates a service name to a hostname and an IP port.  For task `task` launched by framework `framework`, Mesos-DNS generates an SRV record for service name `_task._protocol.framework.domain`, where `protocol` is `udp` or `tcp`. For example, other Mesos tasks can discover service `search` launch by the `marathon` framework with a lookup for lookup `_search._tcp.marathon.mesos`:
 
 ``` console
 ADD SRV TEST
 ``` 
 
-SRV records are generated only for tasks that have allocated a specific port through Mesos. 
+SRV records are generated only for tasks that have been allocated a specific port through Mesos. 
 
 ## Notes
 
-If a framework launches multiple tasks with the same name, the DNS lookup will return multiple A records, one per task. Mesos-DNS randomly shuffles the order of records to provide rudimentary load balancing between these tasks. 
+If a framework launches multiple tasks with the same name, the DNS lookup will return multiple records, one per task. Mesos-DNS randomly shuffles the order of records to provide rudimentary load balancing between these tasks. 
 
-Mesos-DNS does not other types of DNS records at this point. DNS requests for records of type`ANY`, `A`, or `SRV` will return any A or SRV records found. DNS requests for records of other types in the Mesos domain will return `NXDOMAIN`.
+Mesos-DNS does not support other types of DNS records at this point. DNS requests for records of type`ANY`, `A`, or `SRV` will return any A or SRV records found. DNS requests for records of other types in the Mesos domain will return `NXDOMAIN`.
 
 
 
