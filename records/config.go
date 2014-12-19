@@ -37,6 +37,15 @@ type Config struct {
 
 // SetConfig instantiates a Config struct read in from config.json
 func SetConfig() (c Config) {
+	c = Config{
+		RefreshSeconds: 60,
+		TTL:            60,
+		Domain:         "mesos",
+		Port:           53,
+		Timeout:        5,
+		Resolvers:      []string{"8.8.8.8"},
+	}
+
 	b, err := ioutil.ReadFile("config.json")
 	if err != nil {
 		logging.Error.Println("missing config")
@@ -49,6 +58,11 @@ func SetConfig() (c Config) {
 
 	if len(c.Resolvers) == 0 {
 		c.Resolvers = GetLocalDNS()
+	}
+
+	if len(c.Masters) == 0 {
+		logging.Error.Println("please specify mesos masters in config.json")
+		os.Exit(1)
 	}
 
 	return c
