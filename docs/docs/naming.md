@@ -12,6 +12,7 @@ An A record associates a hostname to an IP addresses. For task `task` launched b
 
 ``` console
 $ dig search.marathon.mesos
+
 ; <<>> DiG 9.8.4-rpz2+rl005.12-P1 <<>> search.marathon.mesos
 ;; global options: +cmd
 ;; Got answer:
@@ -30,7 +31,24 @@ search.marathon.mesos.		60	IN	A	10.9.87.94
 An SRV record associates a service name to a hostname and an IP port.  For task `task` launched by framework `framework`, Mesos-DNS generates an SRV record for service name `_task._protocol.framework.domain`, where `protocol` is `udp` or `tcp`. For example, other Mesos tasks can discover service `search` launch by the `marathon` framework with a lookup for lookup `_search._tcp.marathon.mesos`:
 
 ``` console
-ADD SRV TEST
+$ dig _search._tcp.marathon.mesos SRV
+
+; <<>> DiG 9.8.4-rpz2+rl005.12-P1 <<>> _search._tcp.marathon.mesos SRV
+;; global options: +cmd
+;; Got answer:
+;; ->>HEADER<<- opcode: QUERY, status: NOERROR, id: 33793
+;; flags: qr aa rd ra; QUERY: 1, ANSWER: 1, AUTHORITY: 0, ADDITIONAL: 0
+
+;; QUESTION SECTION:
+;_search._tcp.marathon.mesos.	IN SRV
+
+;; ANSWER SECTION:
+_search._tcp.marathon.mesos.	60 IN SRV 0 0 31302 10.254.132.41.
+
+;; Query time: 1 msec
+;; SERVER: 10.228.144.81#53(10.228.144.81)
+;; WHEN: Thu Dec 18 23:06:16 2014
+;; MSG SIZE  rcvd: 127
 ``` 
 
 SRV records are generated only for tasks that have been allocated a specific port through Mesos. 
