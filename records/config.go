@@ -7,6 +7,9 @@ import (
 	"io/ioutil"
 	"net"
 	"os"
+	"os/user"
+	"path/filepath"
+	"strings"
 )
 
 // Config holds mesos dns configuration
@@ -33,10 +36,13 @@ type Config struct {
 	// Timeout is the default connect/read/write timeout for outbound
 	// queries
 	Timeout int
+
+	// File is the location of the config.json file
+	File string
 }
 
 // SetConfig instantiates a Config struct read in from config.json
-func SetConfig() (c Config) {
+func SetConfig(cjson string) (c Config) {
 	c = Config{
 		RefreshSeconds: 60,
 		TTL:            60,
@@ -46,9 +52,20 @@ func SetConfig() (c Config) {
 		Resolvers:      []string{"8.8.8.8"},
 	}
 
-	b, err := ioutil.ReadFile("config.json")
+	usr, _ := user.Current()
+	dir := usr.HomeDir + "/"
+	cjson = strings.Replace(cjson, "~/", dir, 1)
+
+	path, err := filepath.Abs(cjson)
+	if err != nil {
+		logging.Error.Println("can't find config")
+		os.Exit(1)
+	}
+
+	b, err := ioutil.ReadFile(path)
 	if err != nil {
 		logging.Error.Println("missing config")
+		os.Exit(1)
 	}
 
 	err = json.Unmarshal(b, &c)

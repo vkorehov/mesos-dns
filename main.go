@@ -10,19 +10,17 @@ import (
 	"time"
 )
 
-// init provies daemon flags
-func init() {
-	flag.BoolVar(&logging.VerboseFlag, "v", false, "increase the verbosity level")
-}
-
 func main() {
 	var wg sync.WaitGroup
 	var resolver resolver.Resolver
 
+	cjson := flag.String("config", "config.json", "location of config.json")
+	flag.BoolVar(&logging.VerboseFlag, "v", false, "increase the verbosity level")
 	flag.Parse()
+
 	logging.SetupLogs()
 
-	resolver.Config = records.SetConfig()
+	resolver.Config = records.SetConfig(*cjson)
 
 	// reload the first time
 	resolver.Reload()
@@ -45,6 +43,8 @@ func main() {
 	wg.Wait()
 }
 
+// panicRecover catches any panics from the resolvers and sets an error
+// code of server failure
 func panicRecover(f func(w dns.ResponseWriter, r *dns.Msg)) func(w dns.ResponseWriter, r *dns.Msg) {
 	return func(w dns.ResponseWriter, r *dns.Msg) {
 		defer func() {
