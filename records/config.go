@@ -82,6 +82,15 @@ func SetConfig(cjson string) (c Config) {
 		os.Exit(1)
 	}
 
+    logging.Verbose.Println("Mesos-DNS configuration:")
+    logging.Verbose.Println("   - Masters: " + strings.Join(c.Masters,", "))
+    logging.Verbose.Println("   - RefreshSeconds: ", c.RefreshSeconds)
+    logging.Verbose.Println("   - TTL: ", c.TTL)
+    logging.Verbose.Println("   - Domain: " + c.Domain)
+    logging.Verbose.Println("   - Port: ", c.Port)
+    logging.Verbose.Println("   - Timeout: ",  c.Timeout)
+    logging.Verbose.Println("   - Resolvers: " + strings.Join(c.Resolvers,", "))
+
 	return c
 }
 
