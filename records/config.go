@@ -58,13 +58,13 @@ func SetConfig(cjson string) (c Config) {
 
 	path, err := filepath.Abs(cjson)
 	if err != nil {
-		logging.Error.Println("can't find config")
+		logging.Error.Println("cannot find configuration file")
 		os.Exit(1)
 	}
 
 	b, err := ioutil.ReadFile(path)
 	if err != nil {
-		logging.Error.Println("missing config")
+		logging.Error.Println("missing configuration file")
 		os.Exit(1)
 	}
 

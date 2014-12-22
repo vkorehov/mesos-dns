@@ -14,7 +14,7 @@ func main() {
 	var wg sync.WaitGroup
 	var resolver resolver.Resolver
 
-	cjson := flag.String("config", "config.json", "location of config.json")
+	cjson := flag.String("config", "config.json", "location of configuration file (json)")
 	flag.BoolVar(&logging.VerboseFlag, "v", false, "increase the verbosity level")
 	flag.Parse()
 
