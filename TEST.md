@@ -127,3 +127,23 @@ __Unit Testing__
 ```
 go test -v ./...
 ```
+
+__Scripted Test__
+```
+#!/bin/sh
+echo Running resperf on testfile $1, max QPS $2, duration $3
+
+# run resperf
+/usr/local/nom/bin/resperf -s172.16.0.13 -p31054 -d /usr/local/nom/bin/$1  -m $2 -r $3 > resperf.out
+
+# check output
+if grep -q "Maximum throughput:   0.000000 qps" resperf.out; then
+        echo ERROR, Unable to communicate with mesos-dns server
+        /bin/mail -s "Mesos-dns error ($1, $(date))" christos@mesosphere.io < resperf.out
+else
+        echo Success
+fi
+
+```
+
+
