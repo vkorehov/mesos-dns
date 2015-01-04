@@ -104,16 +104,23 @@ func (res *Resolver) formatSRV(name string, target string) (*dns.SRV, error) {
 
 // formatA returns the A resource record for target
 func (res *Resolver) formatA(dom string, target string) (*dns.A, error) {
+	logging.Verbose.Println("begin formatA")
 	ttl := uint32(res.Config.TTL)
 
 	h, _ := res.splitDomain(target)
 
+	logging.Verbose.Println("before ipv4 resolv")
+
 	ip, err := net.ResolveIPAddr("ip4", h)
+	logging.Verbose.Println("after ipv4 resolv")
+
 	if err != nil {
 		return nil, err
 	} else {
 
 		a := ip.IP
+
+		logging.Verbose.Println("begin a return")
 
 		return &dns.A{
 			Hdr: dns.RR_Header{
@@ -217,12 +224,15 @@ func (res *Resolver) HandleMesos(w dns.ResponseWriter, r *dns.Msg) {
 		}
 
 	} else if qType == dns.TypeA {
+		logging.Verbose.Println("starting A query")
 
 		for i := 0; i < len(res.rs.As[dom]); i++ {
 			rr, err := res.formatA(dom, res.rs.As[dom][i])
 			if err != nil {
 				logging.Error.Println(err)
 			} else {
+				logging.Verbose.Println("appending A query")
+
 				m.Answer = append(m.Answer, rr)
 			}
 
@@ -236,6 +246,8 @@ func (res *Resolver) HandleMesos(w dns.ResponseWriter, r *dns.Msg) {
 			if err != nil {
 				logging.Error.Println(err)
 			} else {
+				logging.Verbose.Println("appending A query")
+
 				m.Answer = append(m.Answer, rr)
 			}
 		}
@@ -254,6 +266,8 @@ func (res *Resolver) HandleMesos(w dns.ResponseWriter, r *dns.Msg) {
 	// shuffle answers
 	m.Answer = shuffleAnswers(m.Answer)
 
+	logging.Verbose.Println("before stats")
+
 	// tracing info
 	logging.CurLog.MesosRequests += 1
 
@@ -266,6 +280,8 @@ func (res *Resolver) HandleMesos(w dns.ResponseWriter, r *dns.Msg) {
 
 		logging.CurLog.MesosSuccess += 1
 	}
+
+	logging.Verbose.Println("before msg write")
 
 	err = w.WriteMsg(m)
 	if err != nil {
