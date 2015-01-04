@@ -271,7 +271,7 @@ func stripHost(hostip string) string {
 // insertRR inserts host to name's map
 // refactor me
 func (rg *RecordGenerator) insertRR(name string, host string, rtype string) {
-	logging.Verbose.Println(name + " " + host)
+	logging.Verbose.Println("[" + rtype + "]\t" + name + ": " + host)
 
 	if rtype == "A" {
 
