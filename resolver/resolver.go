@@ -180,9 +180,9 @@ func (res *Resolver) HandleNonMesos(w dns.ResponseWriter, r *dns.Msg) {
 
 		if len(m.Answer) == 0 {
 			logging.CurLog.NonMesosNXDomain += 1
+		} else {
+			logging.CurLog.NonMesosSuccess += 1
 		}
-
-		logging.CurLog.NonMesosSuccess += 1
 	}
 
 	err = w.WriteMsg(m)
@@ -262,9 +262,9 @@ func (res *Resolver) HandleMesos(w dns.ResponseWriter, r *dns.Msg) {
 	} else {
 		if len(m.Answer) == 0 {
 			logging.CurLog.MesosNXDomain += 1
+		} else {
+			logging.CurLog.MesosSuccess += 1
 		}
-
-		logging.CurLog.MesosSuccess += 1
 	}
 
 	err = w.WriteMsg(m)
