@@ -58,4 +58,5 @@ func panicRecover(f func(w dns.ResponseWriter, r *dns.Msg)) func(w dns.ResponseW
 		}()
 		f(w, r)
 	}
+
 }

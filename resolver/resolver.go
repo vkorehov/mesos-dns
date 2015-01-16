@@ -49,6 +49,17 @@ func (res *Resolver) resolveOut(r *dns.Msg, nameserver string, proto string, cnt
 		if cnt > 0 {
 
 			if soa, ok := (in.Ns[0]).(*dns.SOA); ok {
+
+				ip, err := net.ResolveIPAddr("ip4", soa.Ns)
+				if err != nil {
+					return nil, errors.New("can't resolve ip")
+				}
+
+				// fixme - this doesn't seem right
+				if ip.String() == "127.0.0.1" {
+					return nil, errors.New("bad ip")
+				}
+
 				return res.resolveOut(r, soa.Ns+":53", proto, cnt-1)
 			}
 		}
