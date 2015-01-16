@@ -4,9 +4,9 @@ title: Mesos-DNS Configuration Parameters
 
 ##  Mesos-DNS Configuration Parameters
 
-Mesos-DNS is configured through the parameters a json file. You can point Mesos-DNS to a specific configuration file using the argument `-config="pathto/file.json"`. If not configuration file is passed as an argument, Mesos-DNS will look for file `config.json` in the current director. 
+Mesos-DNS is configured through the parameters a json file. You can point Mesos-DNS to a specific configuration file using the argument `-config=pathto/file.json`. If not configuration file is passed as an argument, Mesos-DNS will look for file `config.json` in the current directory. 
 
-An example configuration file includes the following fields:
+The configuration file should include the following fields:
 
 ```
 {
@@ -21,7 +21,7 @@ An example configuration file includes the following fields:
 ```
 
 
-`masters` is a comma separated list with the IP address and port number for the master(s) in the Mesos cluster. Mesos-DNS will automatically find the leading master at any point in order to retrieve state about running tasks. If there is no leading master or the leading master is not responsive, Mesos-DNS will continue serving DNS requests based on stale information about running tasks. 
+`masters` is a comma separated list with the IP address and port number for the master(s) in the Mesos cluster. Mesos-DNS will automatically find the leading master at any point in order to retrieve state about running tasks. If there is no leading master or the leading master is not responsive, Mesos-DNS will continue serving DNS requests based on stale information about running tasks. The `masters` field is required. 
 
 `refreshSeconds` is the frequency at which Mesos-DNS updates DNS records based on information retrieved from the Mesos master. The default value is 60 seconds. 
 
@@ -31,6 +31,6 @@ An example configuration file includes the following fields:
 
 `port` is the port number that Mesos-DNS monitors for incoming DNS requests from slaves. Requests can be send over TCP or UDP. We recommend you use port `53` as several applications assume that the DNS server listens to this port. The default value is `53`.
 
-`resolvers` is a comma separated list with the IP addresses of external DNS servers that Mesos-DNS will contact to resolve any DNS requests outside the `domain`. If `resolvers` is not defined, Mesos-DNS will use the nameservers specified in `/etc/resolv.conf` on the server it is running. The default value is `8.8.8.8`, which is the [Google public DNS](https://developers.google.com/speed/public-dns/) address. 
+`resolvers` is a comma separated list with the IP addresses of external DNS servers that Mesos-DNS will contact to resolve any DNS requests outside the `domain`. If `resolvers` is not defined, Mesos-DNS will use the nameservers specified in `/etc/resolv.conf` on the server it is running. The default value is `8.8.8.8`, which is the [Google public DNS](https://developers.google.com/speed/public-dns/) address. The `resolvers` field is required. 
 
 `timeout` is the timeout threshold, in seconds, for connections and requests to external DNS requests. The default value is 5 seconds. 

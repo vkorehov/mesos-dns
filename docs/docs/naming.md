@@ -44,11 +44,6 @@ $ dig _search._tcp.marathon.mesos SRV
 
 ;; ANSWER SECTION:
 _search._tcp.marathon.mesos.	60 IN SRV 0 0 31302 10.254.132.41.
-
-;; Query time: 1 msec
-;; SERVER: 10.228.144.81#53(10.228.144.81)
-;; WHEN: Thu Dec 18 23:06:16 2014
-;; MSG SIZE  rcvd: 127
 ``` 
 
 SRV records are generated only for tasks that have been allocated a specific port through Mesos. 

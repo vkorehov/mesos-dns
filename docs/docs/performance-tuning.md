@@ -13,7 +13,7 @@ The following are suggestions for further performance tuning, focusing primarily
 To increase the number of cores used by Mesos-DNS, set the `GOMAXPROCS` environment variable. For instance, use the following command line to launch Mesos-DNS on 8 cores:
 
 ```` 
-GOMAXPROCS=8 ./mesos-dns
+GOMAXPROCS=8 mesos-dns
 ````
 
 If a single Mesos-DNS server cannot meet the performance requirements in a very large cluster, you can bring up multiple Mesos-DNS servers and configure a subset of the slaves to use each Mesos-DNS server. All Mesos-DNS servers will serve the same settings derived from the Mesos master state. 
