@@ -111,6 +111,10 @@ func fakeMsg(dom string, rrHeader uint16, proto string) (*dns.Msg, error) {
 	c := new(dns.Client)
 	c.Net = proto
 
+	c.DialTimeout = 10 * time.Second
+	c.ReadTimeout = 10 * time.Second
+	c.WriteTimeout = 10 * time.Second
+
 	m := new(dns.Msg)
 	m.Question = make([]dns.Question, 1)
 	m.Question[0] = dns.Question{dns.Fqdn(dom), rrHeader, qc}
