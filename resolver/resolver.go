@@ -105,14 +105,14 @@ func (res *Resolver) formatSRV(name string, target string) (*dns.SRV, error) {
 
 // formatA returns the A resource record for target
 func (res *Resolver) formatA(dom string, target string) (*dns.A, error) {
+
 	ttl := uint32(res.Config.TTL)
 
-	h, _ := res.splitDomain(target)
-
-	ip, err := net.ResolveIPAddr("ip4", h)
+	ip, err := net.ResolveIPAddr("ip4", target)
 	if err != nil {
 		return nil, err
 	} else {
+
 		a := ip.IP
 
 		return &dns.A{
@@ -217,6 +217,7 @@ func (res *Resolver) HandleNonMesos(w dns.ResponseWriter, r *dns.Msg) {
 // question with resource answer(s)
 // it can handle {A, SRV, ANY}
 func (res *Resolver) HandleMesos(w dns.ResponseWriter, r *dns.Msg) {
+
 	var err error
 
 	dom := cleanWild(r.Question[0].Name)
@@ -247,6 +248,7 @@ func (res *Resolver) HandleMesos(w dns.ResponseWriter, r *dns.Msg) {
 			}
 
 		}
+
 	case dns.TypeANY:
 		// refactor me
 		for i := 0; i < len(res.rs.As[dom]); i++ {
@@ -322,6 +324,7 @@ func (res *Resolver) HandleMesos(w dns.ResponseWriter, r *dns.Msg) {
 
 // Serve starts a dns server for net protocol
 func (res *Resolver) Serve(net string) {
+
 	server := &dns.Server{
 		Addr:       res.Config.Listener + ":" + strconv.Itoa(res.Config.Port),
 		Net:        net,
@@ -329,6 +332,7 @@ func (res *Resolver) Serve(net string) {
 	}
 
 	err := server.ListenAndServe()
+
 	if err != nil {
 		logging.Error.Printf("Failed to setup "+net+" server: %s\n", err.Error())
 	}

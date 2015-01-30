@@ -11,6 +11,11 @@ import (
 	"time"
 )
 
+func init() {
+	logging.VerboseFlag = false
+	logging.SetupLogs()
+}
+
 // dig @127.0.0.1 -p 8053 "bob.*.mesos" ANY
 func TestCleanWild(t *testing.T) {
 	dom := "bob.*.mesos"
@@ -45,7 +50,7 @@ func TestShuffleAnswers(t *testing.T) {
 	for i := 0; i < 10; i++ {
 		name := "10.0.0." + strconv.Itoa(i) + ":1234"
 
-		rr, err := res.formatA("blah.com", name)
+		rr, err := res.formatSRV("blah.com", name)
 		if err != nil {
 			t.Error(err)
 		}
@@ -74,9 +79,6 @@ func TestShuffleAnswers(t *testing.T) {
 }
 
 func fakeDNS(port int) (Resolver, error) {
-	logging.VerboseFlag = false
-	logging.SetupLogs()
-
 	var res Resolver
 	res.Config = records.Config{
 		TTL:       60,
@@ -110,6 +112,9 @@ func fakeMsg(dom string, rrHeader uint16, proto string) (*dns.Msg, error) {
 
 	c := new(dns.Client)
 	c.Net = proto
+	c.DialTimeout = 10 * time.Second
+	c.ReadTimeout = 10 * time.Second
+	c.WriteTimeout = 10 * time.Second
 
 	m := new(dns.Msg)
 	m.Question = make([]dns.Question, 1)

@@ -243,17 +243,18 @@ func (rg *RecordGenerator) InsertState(sj StateJSON, domain string, mname string
 				// SRVs have to have ports ?
 				if task.Resources.Ports != "" {
 					sport := yankPort(task.Resources.Ports)
-					host += ":" + sport
+					shost := host + ":" + sport
 
 					tcp := "_" + tname + "._tcp." + tail
 					udp := "_" + tname + "._udp." + tail
 
-					rg.insertRR(tcp, host, "SRV")
-					rg.insertRR(udp, host, "SRV")
+					rg.insertRR(tcp, shost, "SRV")
+					rg.insertRR(udp, shost, "SRV")
 
 				}
 
 				arec := tname + "." + tail
+
 				rg.insertRR(arec, host, "A")
 
 			}
