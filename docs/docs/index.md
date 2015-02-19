@@ -54,6 +54,53 @@ Note that the `hostname` field refers to the hostname used by the slave when it 
 curl http://master_hostname:5050/master/state.json | python -mjson.tool
 ```
 
+### Testing Mesos-DNS
+
+For this example we'll assume you've deployed an app in Marathon named `/dev/myapp`, with two instances.
+
+To show simple resolution of hostname to IP, use `nslookup`:
+
+```
+nslookup myapp.dev.marathon.mesos
+```
+
+You should see an IP returned for every instance:
+
+```
+$ nslookup myapp.dev.marathon.mesos
+Server:		127.0.0.1
+Address:	127.0.0.1#53
+
+Name:	myapp.dev.marathon.mesos
+Address: 10.0.0.160
+Name:	myapp.dev.marathon.mesos
+Address: 10.0.0.53
+```
+
+To show DNS resolution including the port number in the SRV record, you can use the `dig` tool. This tool expects hostnames to be specified in a particular DNS notation.
+The easiest way to find this is in the verbose log output from Mesos-DNS. Look for an entry similar to:
+
+```
+VERBOSE: 2015/02/19 00:48:27 generator.go:330: [SRV]	_myapp.dev._tcp.marathon.mesos.: ec2-12-3-45-100.compute-1.amazonaws.com:31539
+```
+
+Use this with `dig` to request the SRV record:
+
+```
+dig SRV _myapp.dev._tcp.marathon.mesos.
+```
+
+This will show the full DNS output - again, one per running instance - including port numbers:
+
+```
+$ dig SRV _myapp.dev._tcp.marathon.mesos.
+...
+;; ANSWER SECTION:
+_myapp.dev._tcp.marathon.mesos. 60 IN SRV	0 0 31539 ec2-12-3-45-100.compute-1.amazonaws.com.
+_myapp.dev._tcp.marathon.mesos. 60 IN SRV	0 0 31339 ec2-12-0-100-45.compute-1.amazonaws.com.
+...
+```
+
 ### Slave Setup
 
 To allow Mesos tasks to use Mesos-DNS as the primary DNS server, you must edit the file `/etc/resolv.conf` in every slave and add a new nameserver. For instance, if `mesos-dns` runs on the server with IP address `10.181.64.13`, you should add the line `nameserver 10.181.64.13` at the ***beginning*** of `/etc/resolv.conf` on every slave node. This can be achieve by running:
