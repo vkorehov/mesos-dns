@@ -335,6 +335,7 @@ func (res *Resolver) Serve(net string) {
 	if err != nil {
 		logging.Error.Printf("Failed to setup "+net+" server: %s\n", err.Error())
 	}
+	logging.Error.Printf("ListenAndServe unexpectedly returned ", net)
 }
 
 // Resolver holds configuration information and the resource records
