@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"hash/fnv"
 	"io/ioutil"
 	"net"
 	"net/http"
@@ -15,6 +14,7 @@ import (
 
 	"github.com/mesosphere/mesos-dns/logging"
 	"github.com/mesosphere/mesos-dns/records/labels"
+	"github.com/mesosphere/mesos-dns/records/patterns"
 	"github.com/mesosphere/mesos-dns/records/state"
 )
 
@@ -52,7 +52,7 @@ func (rg *RecordGenerator) ParseState(leader string, c Config) error {
 		hostSpec = labels.RFC952
 	}
 
-	return rg.InsertState(sj, c.Domain, c.SOARname, c.Listener, c.Masters, hostSpec)
+	return rg.InsertState(sj, c.Domain, c.SOARname, c.Listener, c.Masters, hostSpec, c.DomainPatterns)
 }
 
 // Tries each master and looks for the leader
@@ -156,17 +156,6 @@ func (rg *RecordGenerator) loadWrap(ip string, port string) (state.State, error)
 	return sj, err
 }
 
-// BUG: The probability of hashing collisions is too high with only 17 bits.
-// NOTE: Using a numerical base as high as valid characters in DNS names would
-// reduce the resulting length without risking more collisions.
-func hashString(s string) string {
-	h := fnv.New32a()
-	_, _ = h.Write([]byte(s))
-	sum := h.Sum32()
-	lower, upper := uint16(sum), uint16(sum>>16)
-	return strconv.FormatUint(uint64(lower+upper), 10)
-}
-
 // attempt to translate the hostname into an IPv4 address. logs an error if IP
 // lookup fails. if an IP address cannot be found, returns the same hostname
 // that was given. upon success returns the IP address as a string.
@@ -183,9 +172,23 @@ func hostToIP4(hostname string) (string, bool) {
 	return ip.String(), true
 }
 
+func compilePatterns(dp []patterns.DomainPattern) []*patterns.CompiledDomainPattern {
+	compiledPatterns := make([]*patterns.CompiledDomainPattern, 0, len(dp))
+	for _, pattern := range dp {
+		compiled, err := pattern.Compile()
+		if err != nil {
+			logging.Error.Println(err)
+			continue
+		}
+		compiledPatterns = append(compiledPatterns, compiled)
+	}
+	return compiledPatterns
+}
+
 // InsertState transforms a StateJSON into RecordGenerator RRs
 func (rg *RecordGenerator) InsertState(sj state.State, domain string,
-	ns string, listener string, masters []string, spec labels.Func) error {
+	ns string, listener string, masters []string, spec labels.Func,
+	domainPatterns []patterns.DomainPattern) error {
 
 	rg.SlaveIPs = map[string]string{}
 	rg.SRVs = rrs{}
@@ -194,7 +197,7 @@ func (rg *RecordGenerator) InsertState(sj state.State, domain string,
 	rg.slaveRecords(sj, domain, spec)
 	rg.listenerRecord(listener, ns)
 	rg.masterRecord(domain, masters, sj.Leader)
-	rg.taskRecords(sj, domain, spec)
+	rg.taskRecords(sj, domain, spec, domainPatterns)
 
 	return nil
 }
@@ -344,7 +347,12 @@ func (rg *RecordGenerator) listenerRecord(listener string, ns string) {
 	}
 }
 
-func (rg *RecordGenerator) taskRecords(sj state.State, domain string, spec labels.Func) {
+func (rg *RecordGenerator) taskRecords(sj state.State, domain string, spec labels.Func,
+	domainPatterns []patterns.DomainPattern) {
+	// pre-compile the patterns. Only do this once before all the records.
+	compiledPatterns := compilePatterns(domainPatterns)
+
+	// complete crap - refactor me
 	for _, f := range sj.Frameworks {
 		fname := labels.DomainFrag(f.Name, labels.Sep, spec)
 
@@ -358,19 +366,32 @@ func (rg *RecordGenerator) taskRecords(sj state.State, domain string, spec label
 				continue
 			}
 
-			ctx := struct{ TaskName, TaskID, SlaveID string }{
-				spec(task.Name), hashString(task.ID), slaveIDTail(task.SlaveID),
-			}
+			// context used to build domain names
+			ctx := patterns.NewPatternContext(&task, spec)
 
 			// insert canonical A records
 			trec := ctx.TaskName + "-" + ctx.TaskID + "-" + ctx.SlaveID + "." + tail
-			arec := ctx.TaskName + "." + tail
 			containerIP := task.ContainerIP()
-			rg.insertRR(arec, hostIP, "A")
 			rg.insertRR(trec, hostIP, "A")
 			if containerIP != "" {
-				rg.insertRR("_container."+arec, containerIP, "A")
 				rg.insertRR("_container."+trec, containerIP, "A")
+			}
+
+			// insert custom records
+			for _, cp := range compiledPatterns {
+				// apply pattern to the current record
+				baseName, err := cp.Execute(ctx)
+				if err != nil {
+					logging.VeryVerbose.Printf("error applying domain pattern %q: %v", cp.Pattern(), err)
+					continue
+				}
+
+				// insert A records
+				host := baseName + "." + tail
+				rg.insertRR(host, hostIP, "A")
+				if containerIP != "" {
+					rg.insertRR("_container."+host, containerIP, "A")
+				}
 			}
 
 			// Add RFC 2782 SRV records
@@ -474,12 +495,6 @@ func (rg *RecordGenerator) insertRR(name, host, rtype string) bool {
 func leaderIP(leader string) string {
 	pair := strings.Split(leader, "@")[1]
 	return strings.Split(pair, ":")[0]
-}
-
-// return the slave number from a Mesos slave id
-func slaveIDTail(slaveID string) string {
-	fields := strings.Split(slaveID, "-")
-	return strings.ToLower(fields[len(fields)-1])
 }
 
 // should be able to accept

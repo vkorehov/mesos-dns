@@ -11,6 +11,8 @@ import (
 	"time"
 
 	"github.com/mesosphere/mesos-dns/logging"
+	"github.com/mesosphere/mesos-dns/records/patterns"
+
 	"github.com/miekg/dns"
 )
 
@@ -73,6 +75,9 @@ type Config struct {
 
 	// EnforceRFC952 will enforce an older, more strict set of rules for DNS labels
 	EnforceRFC952 bool
+
+	// text/template style patterns for A-records of tasks
+	DomainPatterns []patterns.DomainPattern
 }
 
 // SetConfig instantiates a Config struct read in from config.json
@@ -134,6 +139,12 @@ func SetConfig(cjson string) Config {
 	logging.Verbose.Println("   - ConfigFile: ", c.File)
 	logging.Verbose.Println("   - EnforceRFC952: ", c.EnforceRFC952)
 
+	patternStrings := make([]string, 0, len(c.DomainPatterns))
+	for _, s := range c.DomainPatterns {
+		patternStrings = append(patternStrings, string(s))
+	}
+	logging.Verbose.Println("   - DomainPatterns: " + strings.Join(patternStrings, ", "))
+
 	return *c
 }
 
@@ -157,6 +168,7 @@ func readConfig(file string) (*Config, error) {
 		HTTPOn:         true,
 		ExternalOn:     true,
 		RecurseOn:      true,
+		DomainPatterns: patterns.DefaultDomainPatterns(),
 	}
 
 	usr, err := user.Current()

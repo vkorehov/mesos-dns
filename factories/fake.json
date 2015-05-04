@@ -279,7 +279,31 @@
                             "state": "TASK_STARTING",
                             "timestamp": 1413572380.01234
                         }
-                    ]
+                    ],
+                    "discovery" : {
+                        "version" : "1.0",
+                        "visibility" : "CLUSTER",
+                        "name" : "liquor-store",
+                        "ports" : {
+                            "ports" : [
+                                {
+                                    "number" : 31354,
+                                    "protocol" : "tcp",
+                                    "name" : "http"
+                                }
+                            ]
+                        },
+                        "location" : "europe",
+                        "labels" : {
+                            "labels" : [
+                                {
+                                    "key" : "dc",
+                                    "value" : "de1"
+                                }
+                            ]
+                        },
+                        "environment" : "prod"
+                    }
                 },
                 {
                     "executor_id": "",
@@ -309,7 +333,31 @@
                                 }
                             ]
                         }
-                    ]
+                    ],
+                    "discovery" : {
+                        "version" : "1.0",
+                        "visibility" : "CLUSTER",
+                        "name" : "liquor-store",
+                        "ports" : {
+                            "ports" : [
+                                {
+                                    "number" : 31737,
+                                    "protocol" : "tcp",
+                                    "name" : "http"
+                                }
+                            ]
+                        },
+                        "location" : "europe",
+                        "labels" : {
+                            "labels" : [
+                                {
+                                    "key" : "dc",
+                                    "value" : "de1"
+                                }
+                            ]
+                        },
+                        "environment" : "prod"
+                    }
                 },
                 {
                     "executor_id": "",
