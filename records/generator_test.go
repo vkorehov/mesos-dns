@@ -5,10 +5,10 @@ import (
 	"io/ioutil"
 	"reflect"
 	"testing"
-	"testing/quick"
 
 	"github.com/mesosphere/mesos-dns/logging"
 	"github.com/mesosphere/mesos-dns/records/labels"
+	"github.com/mesosphere/mesos-dns/records/patterns"
 	"github.com/mesosphere/mesos-dns/records/state"
 )
 
@@ -173,7 +173,7 @@ func TestInsertState(t *testing.T) {
 	spec := labels.RFC952
 
 	var rg RecordGenerator
-	if err := rg.InsertState(sj, "mesos", "mesos-dns.mesos.", "127.0.0.1", masters, spec); err != nil {
+	if err := rg.InsertState(sj, "mesos", "mesos-dns.mesos.", "127.0.0.1", masters, spec, patterns.DefaultDomainPatterns()); err != nil {
 		t.Fatal(err)
 	}
 
@@ -227,10 +227,3 @@ func TestNTasks(t *testing.T) {
 	}
 }
 
-func TestHashString(t *testing.T) {
-	t.Skip("TODO: Increase entropy, fix the bug!")
-	fn := func(a, b string) bool { return hashString(a) != hashString(b) }
-	if err := quick.Check(fn, &quick.Config{MaxCount: 1e9}); err != nil {
-		t.Fatal(err)
-	}
-}
