@@ -26,15 +26,16 @@ func TestMasterRecord(t *testing.T) {
 	tt := []struct {
 		domain  string
 		masters []string
+		slaves  []string
 		leader  string
 		expect  []expectedRR
 	}{
-		{"foo.com", nil, "", nil},
-		{"foo.com", nil, "@", nil},
-		{"foo.com", nil, "1@", nil},
-		{"foo.com", nil, "@2", nil},
-		{"foo.com", nil, "3@4", nil},
-		{"foo.com", nil, "5@6:7",
+		{"foo.com", nil, nil, "", nil},
+		{"foo.com", nil, nil, "@", nil},
+		{"foo.com", nil, nil, "1@", nil},
+		{"foo.com", nil, nil, "@2", nil},
+		{"foo.com", nil, nil, "3@4", nil},
+		{"foo.com", nil, nil, "5@6:7",
 			[]expectedRR{
 				{"leader.foo.com.", "6", "A"},
 				{"master.foo.com.", "6", "A"},
@@ -43,7 +44,7 @@ func TestMasterRecord(t *testing.T) {
 				{"_leader._udp.foo.com.", "leader.foo.com.:7", "SRV"},
 			}},
 		// single master: leader and fallback
-		{"foo.com", []string{"6:7"}, "5@6:7",
+		{"foo.com", []string{"6:7"}, nil, "5@6:7",
 			[]expectedRR{
 				{"leader.foo.com.", "6", "A"},
 				{"master.foo.com.", "6", "A"},
@@ -51,8 +52,21 @@ func TestMasterRecord(t *testing.T) {
 				{"_leader._tcp.foo.com.", "leader.foo.com.:7", "SRV"},
 				{"_leader._udp.foo.com.", "leader.foo.com.:7", "SRV"},
 			}},
+		// single master: leader, fallback and two slaves
+		{"foo.com", []string{"6:7"}, []string{"10:1", "11:1"}, "5@6:7",
+			[]expectedRR{
+				{"leader.foo.com.", "6", "A"},
+				{"master.foo.com.", "6", "A"},
+				{"master0.foo.com.", "6", "A"},
+				{"slave.foo.com.", "10", "A"},
+				{"slave.foo.com.", "11", "A"},
+				{"slave0.foo.com.", "10", "A"},
+				{"slave1.foo.com.", "11", "A"},
+				{"_leader._tcp.foo.com.", "leader.foo.com.:7", "SRV"},
+				{"_leader._udp.foo.com.", "leader.foo.com.:7", "SRV"},
+			}},
 		// leader not in fallback list
-		{"foo.com", []string{"8:9"}, "5@6:7",
+		{"foo.com", []string{"8:9"}, nil, "5@6:7",
 			[]expectedRR{
 				{"leader.foo.com.", "6", "A"},
 				{"master.foo.com.", "6", "A"},
@@ -63,7 +77,7 @@ func TestMasterRecord(t *testing.T) {
 				{"_leader._udp.foo.com.", "leader.foo.com.:7", "SRV"},
 			}},
 		// duplicate fallback masters, leader not in fallback list
-		{"foo.com", []string{"8:9", "8:9"}, "5@6:7",
+		{"foo.com", []string{"8:9", "8:9"}, nil, "5@6:7",
 			[]expectedRR{
 				{"leader.foo.com.", "6", "A"},
 				{"master.foo.com.", "6", "A"},
@@ -74,7 +88,7 @@ func TestMasterRecord(t *testing.T) {
 				{"_leader._udp.foo.com.", "leader.foo.com.:7", "SRV"},
 			}},
 		// leader that's also listed in the fallback list (at the end)
-		{"foo.com", []string{"8:9", "6:7"}, "5@6:7",
+		{"foo.com", []string{"8:9", "6:7"}, nil, "5@6:7",
 			[]expectedRR{
 				{"leader.foo.com.", "6", "A"},
 				{"master.foo.com.", "6", "A"},
@@ -85,7 +99,7 @@ func TestMasterRecord(t *testing.T) {
 				{"_leader._udp.foo.com.", "leader.foo.com.:7", "SRV"},
 			}},
 		// duplicate leading masters in the fallback list
-		{"foo.com", []string{"8:9", "6:7", "6:7"}, "5@6:7",
+		{"foo.com", []string{"8:9", "6:7", "6:7"}, nil, "5@6:7",
 			[]expectedRR{
 				{"leader.foo.com.", "6", "A"},
 				{"master.foo.com.", "6", "A"},
@@ -96,7 +110,7 @@ func TestMasterRecord(t *testing.T) {
 				{"_leader._udp.foo.com.", "leader.foo.com.:7", "SRV"},
 			}},
 		// leader that's also listed in the fallback list (in the middle)
-		{"foo.com", []string{"8:9", "6:7", "bob:0"}, "5@6:7",
+		{"foo.com", []string{"8:9", "6:7", "bob:0"}, nil, "5@6:7",
 			[]expectedRR{
 				{"leader.foo.com.", "6", "A"},
 				{"master.foo.com.", "6", "A"},
@@ -114,7 +128,7 @@ func TestMasterRecord(t *testing.T) {
 		rg.As = make(rrs)
 		rg.SRVs = make(rrs)
 		t.Logf("test case %d", i+1)
-		rg.masterRecord(tc.domain, tc.masters, tc.leader)
+		rg.masterRecord(tc.domain, tc.masters, tc.slaves, tc.leader)
 		if tc.expect == nil {
 			if len(rg.As) > 0 {
 				t.Fatalf("test case %d: unexpected As: %v", i+1, rg.As)

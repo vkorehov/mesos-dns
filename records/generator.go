@@ -273,10 +273,13 @@ func (t *Task) containerIP() string {
 func (rg *RecordGenerator) InsertState(sj StateJSON, domain string, ns string,
 	listener string, masters []string, spec labels.HostNameSpec) error {
 
-	// creates a map with slave IP addresses (IPv4)
-	rg.SlaveIPs = make(map[string]string)
-	for _, slave := range sj.Slaves {
-		rg.SlaveIPs[slave.Id] = sanitizedSlaveAddress(slave.Hostname, spec)
+	// creates a map and array with slave IP addresses (IPv4)
+	rg.SlaveIPs = make(map[string]string, len(sj.Slaves))
+	slaves := make([]string, len(sj.Slaves))
+	for i, slave := range sj.Slaves {
+		slaveAddr := sanitizedSlaveAddress(slave.Hostname, spec)
+		rg.SlaveIPs[slave.Id] = slaveAddr
+		slaves[i] = slaveAddr
 	}
 
 	rg.SRVs = make(rrs)
@@ -322,9 +325,8 @@ func (rg *RecordGenerator) InsertState(sj StateJSON, domain string, ns string,
 			}
 		}
 	}
-
 	rg.listenerRecord(listener, ns)
-	rg.masterRecord(domain, masters, sj.Leader)
+	rg.masterRecord(domain, masters, slaves, sj.Leader)
 	return nil
 }
 
@@ -332,6 +334,8 @@ func (rg *RecordGenerator) InsertState(sj StateJSON, domain string, ns string,
 //     master.domain.  // resolves to IPs of all masters
 //     masterN.domain. // one IP address for each master
 //     leader.domain.  // one IP address for the leading master
+//     slave.domain.   // resolves to IPs of all slaves
+//     slaveN.domain   // one IP address for each slave
 //
 // The current func implementation makes an assumption about the order of masters:
 // it's the order in which you expect the enumerated masterN records to be created.
@@ -354,7 +358,7 @@ func (rg *RecordGenerator) InsertState(sj StateJSON, domain string, ns string,
 // So the func tries to index the masters as they're listed and begrudgingly assigns
 // the leading master an index out-of-band if it's not actually listed in the masters
 // list. There are probably better ways to do it.
-func (rg *RecordGenerator) masterRecord(domain string, masters []string, leader string) {
+func (rg *RecordGenerator) masterRecord(domain string, masters, slaves []string, leader string) {
 	// create records for leader
 	// A records
 	h := strings.Split(leader, "@")
@@ -422,6 +426,20 @@ func (rg *RecordGenerator) masterRecord(domain string, masters []string, leader 
 		}
 		arec = "master" + strconv.Itoa(idx) + "." + domain + "."
 		rg.insertRR(arec, ip, "A")
+	}
+
+	idx = 0
+	for _, slave := range slaves {
+		ip, _, err := getProto(slave)
+		if err != nil {
+			logging.Error.Println(err)
+			continue
+		}
+		arec := "slave." + domain + "."
+		rg.insertRR(arec, ip, "A")
+		arec = "slave" + strconv.Itoa(idx) + "." + domain + "."
+		rg.insertRR(arec, ip, "A")
+		idx++
 	}
 }
 
