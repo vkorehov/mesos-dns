@@ -430,15 +430,18 @@ func (rg *RecordGenerator) masterRecord(domain string, masters, slaves []string,
 
 	idx = 0
 	for _, slave := range slaves {
-		ip, _, err := getProto(slave)
+		ip, port, err := getProto(slave)
 		if err != nil {
 			logging.Error.Println(err)
 			continue
 		}
-		arec := "slave." + domain + "."
-		rg.insertRR(arec, ip, "A")
-		arec = "slave" + strconv.Itoa(idx) + "." + domain + "."
-		rg.insertRR(arec, ip, "A")
+		name := "slave." + domain + "."
+		rg.insertRR(name, ip, "A")
+		rg.insertRR(name, ip+":"+port, "SRV")
+
+		name = "slave" + strconv.Itoa(idx) + "." + domain + "."
+		rg.insertRR(name, ip, "A")
+		rg.insertRR(name, ip+":"+port, "SRV")
 		idx++
 	}
 }

@@ -64,6 +64,8 @@ func TestMasterRecord(t *testing.T) {
 				{"slave1.foo.com.", "11", "A"},
 				{"_leader._tcp.foo.com.", "leader.foo.com.:7", "SRV"},
 				{"_leader._udp.foo.com.", "leader.foo.com.:7", "SRV"},
+				{"slave.foo.com.", ":10", "SRV"},
+				{"slave.foo.com.", ":11", "SRV"},
 			}},
 		// leader not in fallback list
 		{"foo.com", []string{"8:9"}, nil, "5@6:7",
