@@ -272,6 +272,14 @@ func TestInsertState(t *testing.T) {
 		t.Errorf("should return the container IPs 10.3.0.1, 10.3.0.2 for the task, but got %v", rrs)
 	}
 
+	rrs, ok = rg.As["_container.reviewbot.marathon.mesos."]
+	if !ok {
+		t.Error("should find this running task - A record")
+	}
+	if got, want := rrs, []string{"10.5.0.7"}; !reflect.DeepEqual(got, want) {
+		t.Errorf("should return the slave ips 10.5.0.7 for the task, but got %v", rrs)
+	}
+
 	_, ok = rg.As["poseidon.marathon.mesos."]
 	if ok {
 		t.Error("should not find this not-running task - A record")
@@ -308,7 +316,7 @@ func TestInsertState(t *testing.T) {
 	}
 
 	// test for 5 A names
-	if got, want := len(rg.As), 16; got != want {
+	if got, want := len(rg.As), 18; got != want {
 		t.Errorf("not enough As, got %d, expected %d", got, want)
 	}
 

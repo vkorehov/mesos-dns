@@ -242,7 +242,10 @@ func sanitizedSlaveAddress(hostname string, spec labels.HostNameSpec) string {
 }
 
 func (t *Task) containerIP() string {
-	const containerIPTaskStatusLabel = "Docker.NetworkSettings.IPAddress"
+	const (
+		dockerLabel = "Docker.NetworkSettings.IPAddress"
+		mesosLabel = "MesosContainerizer.NetworkSettings.IPAddress"
+	)
 
 	// find TASK_RUNNING statuses
 	var latestContainerIP string
@@ -254,7 +257,7 @@ func (t *Task) containerIP() string {
 
 		// find the latest docker-inspect label
 		for _, label := range status.Labels {
-			if label.Key == containerIPTaskStatusLabel && status.Timestamp > latestTimestamp {
+			if (label.Key == dockerLabel || label.Key == mesosLabel) && status.Timestamp > latestTimestamp {
 				latestContainerIP = label.Value
 				latestTimestamp = status.Timestamp
 				break
