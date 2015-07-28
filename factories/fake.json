@@ -324,7 +324,17 @@
                     "statuses": [
                         {
                             "state": "TASK_RUNNING",
-                            "timestamp": 1414800227.3456
+                            "timestamp": 1414800227.3456,
+                            "labels": [
+                                {
+                                    "key": "foo",
+                                    "value": "bar"
+                                },
+                                {
+                                    "key": "MesosContainerizer.NetworkSettings.IPAddress",
+                                    "value": "10.5.0.7"
+                                }
+                            ]
                         }
                     ]
                 }
