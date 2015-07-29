@@ -7,6 +7,7 @@ import (
 	"testing"
 	"testing/quick"
 
+	"fmt"
 	"github.com/mesosphere/mesos-dns/logging"
 	"github.com/mesosphere/mesos-dns/records/labels"
 )
@@ -227,103 +228,63 @@ func TestInsertState(t *testing.T) {
 	rg := &RecordGenerator{}
 	rg.InsertState(sj, "mesos", "mesos-dns.mesos.", "127.0.0.1", masters, spec)
 
-	// ensure we are only collecting running tasks
-	_, ok := rg.SRVs["_poseidon._tcp.marathon.mesos."]
-	if ok {
-		t.Error("should not find this not-running task - SRV record")
+	type expectation struct {
+		domain string
+		num    uint
+		answer []string
+		reason string
+	}
+	expectedARecords := []expectation{
+		{domain: "liquor-store.marathon.mesos.", num: 2, answer: []string{"1.2.3.11", "1.2.3.12"}},
+		{domain: "_container.liquor-store.marathon.mesos.", num: 2, answer: []string{"10.3.0.1", "10.3.0.2"}},
+		{domain: "_container.reviewbot.marathon.mesos.", num: 1, answer: []string{"10.5.0.7"}},
+		{domain: "poseidon.marathon.mesos.", reason: "task was not running"},
+		{domain: "_container.poseidon.marathon.mesos.", reason: "task was not running"},
+		{domain: "master.mesos.", num: 1},
+		{domain: "master0.mesos.", num: 1},
+		{domain: "leader.mesos.", num: 1},
+		{domain: "some-box.chronoswithaspaceandmixe.mesos.", num: 1}, // ensure we translate the framework name as well
+	}
+	expectedSRVRecords := []expectation{
+		{domain: "_poseidon._tcp.marathon.mesos.", reason: "task was not running"},
+		{domain: "_leader._tcp.mesos.", num: 1},
+		{domain: "_liquor-store._tcp.marathon.mesos.", num: 1},
+		{domain: "_liquor-store.marathon.mesos."},
 	}
 
-	rrs, ok := rg.As["liquor-store.marathon.mesos."]
-	if !ok {
-		t.Error("should find this running task - A record")
-	}
-	if got, want := rrs, []string{"1.2.3.11", "1.2.3.12"}; !reflect.DeepEqual(got, want) {
-		t.Errorf("should return the slave ips 1.2.3.11, 1.2.3.12 for the task, but got %v", rrs)
+	checkExpectations := func(expectations []expectation, records rrs, recordName string) {
+		for _, e := range expectations {
+			because := ""
+			if e.reason != "" {
+				because = fmt.Sprintf(", because %s", e.reason)
+			}
+
+			rrs, ok := records[e.domain]
+			if e.num == 0 && ok {
+				s := ""
+				if len(rrs) != 1 {
+					s = "s"
+				}
+
+				t.Errorf(`didn't expect %d %s record%s for "%s"%s. Got %v, expected none.`, len(rrs), recordName, s, e.domain, because, rrs)
+			} else if e.num != 0 && !ok {
+				s := ""
+				if e.num != 1 {
+					s = "s"
+				}
+
+				want := ""
+				if len(e.answer) > 0 {
+					want = fmt.Sprintf(", expected %v", e.answer)
+				}
+
+				t.Errorf(`expected %d %s record%s for "%s"%s. Got %v%s.`, e.num, recordName, s, e.domain, because, rrs, want)
+			}
+		}
 	}
 
-	rrs, ok = rg.As["_container.liquor-store.marathon.mesos."]
-	if !ok {
-		t.Error("should find the container ip")
-	}
-	if got, want := rrs, []string{"10.3.0.1", "10.3.0.2"}; !reflect.DeepEqual(got, want) {
-		t.Errorf("should return the container IPs 10.3.0.1, 10.3.0.2 for the task, but got %v", rrs)
-	}
-
-	rrs, ok = rg.As["_container.reviewbot.marathon.mesos."]
-	if !ok {
-		t.Error("should find this running task - A record")
-	}
-	if got, want := rrs, []string{"10.5.0.7"}; !reflect.DeepEqual(got, want) {
-		t.Errorf("should return the slave ips 10.5.0.7 for the task, but got %v", rrs)
-	}
-
-	_, ok = rg.As["poseidon.marathon.mesos."]
-	if ok {
-		t.Error("should not find this not-running task - A record")
-	}
-
-	_, ok = rg.As["_container.poseidon.marathon.mesos."]
-	if ok {
-		t.Error("should not find a container IP")
-	}
-
-	_, ok = rg.As["master.mesos."]
-	if !ok {
-		t.Error("should find a running master - A record")
-	}
-
-	rrs, ok = rg.As["slave.mesos."]
-	if !ok {
-		t.Error("should find a running slave - A record")
-	}
-	if got, want := rrs, []string{"1.2.3.10", "1.2.3.11", "1.2.3.12"}; !reflect.DeepEqual(got, want) {
-		t.Errorf("should return the slave ips %v for the slave record, but got %v", want, got)
-	}
-
-	_, ok = rg.As["master0.mesos."]
-	if !ok {
-		t.Error("should find a running master0 - A record")
-	}
-
-	_, ok = rg.As["leader.mesos."]
-	if !ok {
-		t.Error("should find a leading master - A record")
-	}
-
-	_, ok = rg.SRVs["_leader._tcp.mesos."]
-	if !ok {
-		t.Error("should find a leading master - SRV record")
-	}
-
-	// test for 10 SRV names
-	if got, want := len(rg.SRVs), 10; got != want {
-		t.Errorf("not enough SRVs, got %d, expected %d", got, want)
-	}
-
-	// test for 5 A names
-	if got, want := len(rg.As), 18; got != want {
-		t.Errorf("not enough As, got %d, expected %d", got, want)
-	}
-
-	// ensure we translate the framework name as well
-	_, ok = rg.As["some-box.chronoswithaspaceandmixe.mesos."]
-	if !ok {
-		t.Error("should find this task w/a space in the framework name - A record")
-	}
-
-	// ensure we find this SRV
-	rrs = rg.SRVs["_liquor-store._tcp.marathon.mesos."]
-	// ensure there are 3 RRDATA answers for this SRV name
-	if len(rrs) != 3 {
-		t.Error("not enough SRV records")
-	}
-
-	// ensure we don't find this as a SRV record
-	rrs = rg.SRVs["_liquor-store.marathon.mesos."]
-	if len(rrs) != 0 {
-		t.Error("not a proper SRV record")
-	}
-
+	checkExpectations(expectedARecords, rg.As, "A")
+	checkExpectations(expectedSRVRecords, rg.SRVs, "SRV")
 }
 
 // ensure we only generate one A record for each host
