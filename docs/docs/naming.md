@@ -26,11 +26,36 @@ $ dig search.marathon.mesos
 search.marathon.mesos.		60	IN	A	10.9.87.94
 ```
  
+## Container IP A Records
+
+The A records above point to the host IP of a given service. If container IPs are supported by Mesos and the executor of a test, Mesos-DNS will create another A record for each of the A records above by prefixing it with `_container` and returning the container IP:
+
+``` console
+$ dig _container.search.marathon.mesos
+
+; <<>> DiG 9.8.4-rpz2+rl005.12-P1 <<>> _container.search.marathon.mesos
+;; global options: +cmd
+;; Got answer:
+;; ->>HEADER<<- opcode: QUERY, status: NOERROR, id: 24471
+;; flags: qr aa rd ra; QUERY: 1, ANSWER: 1, AUTHORITY: 1, ADDITIONAL: 0
+
+;; QUESTION SECTION:
+;_container.search.marathon.mesos.         IN  A
+
+;; ANSWER SECTION:
+_container.search.marathon.mesos.      60  IN  A   10.0.3.72
+```
+
+*Note*: Container IPs must be provided by the executor of a task in one of the following task status labels:
+- `Docker.NetworkSettings.IPAddress`
+- `MesosContainerizer.NetworkSettings.IPAddress`.
+In general support for these will not be available before Mesos 0.24.
+
 ## SRV Records
 
 An SRV record associates a service name to a hostname and an IP port.  For task `task` launched by framework `framework`, Mesos-DNS generates an SRV record for service name `_task._protocol.framework.domain`, where `protocol` is `udp` or `tcp`. For example, other Mesos tasks can discover service `search` launched by the `marathon` framework with a lookup for lookup `_search._tcp.marathon.mesos`:
 
-``` console
+```console
 $ dig _search._tcp.marathon.mesos SRV
 
 ; <<>> DiG 9.8.4-rpz2+rl005.12-P1 <<>> _search._tcp.marathon.mesos SRV
@@ -44,7 +69,7 @@ $ dig _search._tcp.marathon.mesos SRV
 
 ;; ANSWER SECTION:
 _search._tcp.marathon.mesos.	60 IN SRV 0 0 31302 10.254.132.41.
-``` 
+```
 
 SRV records are generated only for tasks that have been allocated a specific port through Mesos. 
 
