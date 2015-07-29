@@ -244,7 +244,7 @@ func sanitizedSlaveAddress(hostname string, spec labels.HostNameSpec) string {
 func (t *Task) containerIP() string {
 	const (
 		dockerLabel = "Docker.NetworkSettings.IPAddress"
-		mesosLabel = "MesosContainerizer.NetworkSettings.IPAddress"
+		mesosLabel  = "MesosContainerizer.NetworkSettings.IPAddress"
 	)
 
 	// find TASK_RUNNING statuses
