@@ -234,7 +234,7 @@ func hostToIP4(hostname string) (string, bool) {
 func (t *Task) containerIP() string {
 	const (
 		dockerLabel = "Docker.NetworkSettings.IPAddress"
-		mesosLabel = "MesosContainerizer.NetworkSettings.IPAddress"
+		mesosLabel  = "MesosContainerizer.NetworkSettings.IPAddress"
 	)
 
 	// find TASK_RUNNING statuses
