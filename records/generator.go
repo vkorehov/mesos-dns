@@ -302,8 +302,8 @@ func (rg *RecordGenerator) InsertState(sj StateJSON, domain string, ns string,
 
 			// A records with container IP
 			if containerIP := task.containerIP(); containerIP != "" {
-				rg.insertRR("_container."+arec, containerIP, "A")
-				rg.insertRR("_container."+trec, containerIP, "A")
+				rg.insertRR("container."+arec, containerIP, "A")
+				rg.insertRR("container."+trec, containerIP, "A")
 			}
 
 			// SRV records
