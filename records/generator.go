@@ -377,6 +377,14 @@ func (rg *RecordGenerator) taskRecords(sj state.State, domain string, spec label
 				rg.insertRR("_container."+trec, containerIP, "A")
 			}
 
+			// insert canonical SRV records
+			for _, port := range task.Ports() {
+				rg.insertRR(trec, hostIP+":"+port, "SRV")
+				if containerIP != "" {
+					rg.insertRR("_container."+trec, containerIP+":"+port, "SRV")
+				}
+			}
+
 			// insert custom records
 			for _, cp := range compiledPatterns {
 				// apply pattern to the current record
@@ -391,6 +399,15 @@ func (rg *RecordGenerator) taskRecords(sj state.State, domain string, spec label
 				rg.insertRR(host, hostIP, "A")
 				if containerIP != "" {
 					rg.insertRR("_container."+host, containerIP, "A")
+				}
+
+				// insert SRV records
+				for _, port := range task.Ports() {
+					srvHost := trec + ":" + port
+					rg.insertRR(host, srvHost, "SRV")
+					if containerIP != "" {
+						rg.insertRR("_container."+host, srvHost, "SRV")
+					}
 				}
 			}
 
