@@ -70,16 +70,16 @@ func TestExecute(t *testing.T) {
 		answer  string
 		err     bool
 	}{
-		{"abc", labels.RFC952, PatternContext{}, "abc", false},
-		{"abc.def", labels.RFC952, PatternContext{}, "abc.def", false},
-		{"abc.def123.ghi.j-k-l", labels.RFC952, PatternContext{}, "abc.def123.ghi.j-k-l", false},
+		{"abc", labels.RFC952, PatternContext{}, "abc.mesos.", false},
+		{"abc.def", labels.RFC952, PatternContext{}, "abc.def.mesos.", false},
+		{"abc.def123.ghi.j-k-l", labels.RFC952, PatternContext{}, "abc.def123.ghi.j-k-l.mesos.", false},
 
-		{"{framework}", labels.RFC952, PatternContext{"framework": "marathon"}, "marathon", false},
-		{"{ framework\t}", labels.RFC952, PatternContext{"framework": "marathon"}, "marathon", false},
-		{"{   \tframework\t \t}", labels.RFC952, PatternContext{"framework": "marathon"}, "marathon", false},
-		{"{framework}.mesos", labels.RFC952, PatternContext{"framework": "marathon"}, "marathon.mesos", false},
-		{"{name}.{framework}.mesos", labels.RFC952, PatternContext{"framework": "marathon", "name": "nginx"}, "nginx.marathon.mesos", false},
-		{"{name}-{framework}.mesos", labels.RFC952, PatternContext{"framework": "marathon", "name": "nginx"}, "nginx-marathon.mesos", false},
+		{"{framework}", labels.RFC952, PatternContext{"framework": "marathon"}, "marathon.mesos.", false},
+		{"{ framework\t}", labels.RFC952, PatternContext{"framework": "marathon"}, "marathon.mesos.", false},
+		{"{   \tframework\t \t}", labels.RFC952, PatternContext{"framework": "marathon"}, "marathon.mesos.", false},
+		{"{framework}.foo", labels.RFC952, PatternContext{"framework": "marathon"}, "marathon.foo.mesos.", false},
+		{"{name}.{framework}", labels.RFC952, PatternContext{"framework": "marathon", "name": "nginx"}, "nginx.marathon.mesos.", false},
+		{"{name}-{framework}", labels.RFC952, PatternContext{"framework": "marathon", "name": "nginx"}, "nginx-marathon.mesos.", false},
 	} {
 		compiled, err := DomainPattern(ts.pattern).Compile(ts.rfc)
 		if err != nil {
