@@ -388,9 +388,9 @@ func (rg *RecordGenerator) taskRecords(sj state.State, domain string, spec label
 			// insert custom records
 			for _, cp := range compiledPatterns {
 				// apply pattern to the current record
-				baseName, err := cp.Execute(ctx)
+				baseName, err := cp.Execute(context)
 				if err != nil {
-					logging.VeryVerbose.Printf("error applying domain pattern %q: %v", cp.Pattern(), err)
+					logging.VeryVerbose.Printf("skipping because of error applying domain pattern %q to context %v: %v", cp.Pattern(), context, err)
 					continue
 				}
 
