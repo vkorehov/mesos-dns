@@ -172,10 +172,10 @@ func hostToIP4(hostname string) (string, bool) {
 	return ip.String(), true
 }
 
-func compilePatterns(dp []patterns.DomainPattern) []*patterns.CompiledDomainPattern {
+func compileNonCanonicalPatterns(dp []patterns.DomainPattern, spec labels.Func) []*patterns.CompiledDomainPattern {
 	compiledPatterns := make([]*patterns.CompiledDomainPattern, 0, len(dp))
 	for _, pattern := range dp {
-		compiled, err := pattern.Compile()
+		compiled, err := pattern.Compile(spec)
 		if err != nil {
 			logging.Error.Println(err)
 			continue
@@ -183,6 +183,14 @@ func compilePatterns(dp []patterns.DomainPattern) []*patterns.CompiledDomainPatt
 		compiledPatterns = append(compiledPatterns, compiled)
 	}
 	return compiledPatterns
+}
+
+func compileEssentialPatterns(pattern string, spec labels.Func) *patterns.CompiledDomainPattern {
+	compiled, err := patterns.DomainPattern(pattern).Compile(spec)
+	if err != nil {
+		logging.Error.Fatalf("cannot compile invalid pattern %q: %v", pattern, err)
+	}
+	return compiled
 }
 
 // InsertState transforms a StateJSON into RecordGenerator RRs
@@ -350,14 +358,15 @@ func (rg *RecordGenerator) listenerRecord(listener string, ns string) {
 func (rg *RecordGenerator) taskRecords(sj state.State, domain string, spec labels.Func,
 	domainPatterns []patterns.DomainPattern) {
 	// pre-compile the patterns. Only do this once before all the records.
-	compiledPatterns := compilePatterns(domainPatterns)
+	compiledPatterns  := compileNonCanonicalPatterns(domainPatterns, spec)
+	canonicalPattern  := compileEssentialPatterns("{name}-{task-id-hash}-{slave-id-short}.{framework}", spec)
+	tcpRFC2782Pattern := compileEssentialPatterns("_{name}._tcp.{framework}", spec)
+	udpRFC2782Pattern := compileEssentialPatterns("_{name}._udp.{framework}", spec)
 
 	// complete crap - refactor me
 	for _, f := range sj.Frameworks {
-		fname := labels.DomainFrag(f.Name, labels.Sep, spec)
-
 		// insert taks records
-		tail := fname + "." + domain + "."
+		fname := labels.DomainFrag(f.Name, labels.Sep, spec)
 		for _, task := range f.Tasks {
 			hostIP, ok := rg.SlaveIPs[task.SlaveID]
 
@@ -367,10 +376,15 @@ func (rg *RecordGenerator) taskRecords(sj state.State, domain string, spec label
 			}
 
 			// context used to build domain names
-			ctx := patterns.NewPatternContext(&task, spec)
+			ctx := patterns.NewPatternContext(&task, fname, spec)
 
 			// insert canonical A records
-			trec := ctx.TaskName + "-" + ctx.TaskID + "-" + ctx.SlaveID + "." + tail
+			trec, err := canonicalPattern.Execute(ctx, domain)
+			if err != nil {
+				logging.Error.Printf("error creating the canonical host name for task %v: %v", task, err)
+				continue
+			}
+
 			containerIP := task.ContainerIP()
 			rg.insertRR(trec, hostIP, "A")
 			if containerIP != "" {
@@ -388,14 +402,13 @@ func (rg *RecordGenerator) taskRecords(sj state.State, domain string, spec label
 			// insert custom records
 			for _, cp := range compiledPatterns {
 				// apply pattern to the current record
-				baseName, err := cp.Execute(context)
+				host, err := cp.Execute(ctx, domain)
 				if err != nil {
-					logging.VeryVerbose.Printf("skipping because of error applying domain pattern %q to context %v: %v", cp.Pattern(), context, err)
+					logging.VeryVerbose.Printf("skipping because of error applying domain pattern %q to context %v: %v", cp.Pattern(), ctx, err)
 					continue
 				}
 
-				// insert A records
-				host := baseName + "." + tail
+				// insert A recordsbaseName
 				rg.insertRR(host, hostIP, "A")
 				if containerIP != "" {
 					rg.insertRR("_container."+host, containerIP, "A")
@@ -414,8 +427,8 @@ func (rg *RecordGenerator) taskRecords(sj state.State, domain string, spec label
 			// Add RFC 2782 SRV records
 			for _, port := range task.Ports() {
 				srvHost := trec + ":" + port
-				tcp := "_" + ctx.TaskName + "._tcp." + tail
-				udp := "_" + ctx.TaskName + "._udp." + tail
+				tcp, _ := tcpRFC2782Pattern.Execute(ctx, domain)
+				udp, _ := udpRFC2782Pattern.Execute(ctx, domain)
 				rg.insertRR(tcp, srvHost, "SRV")
 				rg.insertRR(udp, srvHost, "SRV")
 			}
