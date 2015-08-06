@@ -47,6 +47,62 @@ func DefaultDomainPatterns() []DomainPattern {
 	return clone
 }
 
+// addNonVariableTokens splits the given string s into partial labels and adds
+// tokens for them. It accepts labels with "_" depending on whether s is in the
+// left or right most position in the pattern.
+func addNonVariableTokens(tokens []token, s string, leftMost, rightMost bool, spec labels.Func) ([]token, error) {
+	if s == "" {
+		return tokens, nil
+	}
+
+	if s == "." {
+		tokens = append(tokens, separatorToken{})
+		return tokens, nil
+	}
+
+	labels := strings.Split(s, ".")
+	for i, label := range labels {
+		if i != 0 {
+			tokens = append(tokens, separatorToken{})
+		}
+
+		// "" and first or last => . at the left or right of s, skip empty string
+		if label == "" && (i == 0 || i == len(labels)-1) {
+			continue
+		}
+
+		// "" and not the first or last => consecutive separators
+		if label == "" && i > 0 && i < len(labels)-1 {
+			return nil, fmt.Errorf("invalid consecutive separators")
+		}
+
+		// special case for valid underscores: trim them for spec comparison below
+		labelWithoutValidUnderscore := label
+		if (label[0] == '_' && label != "_") || (label == "_" && !rightMost) {
+			labelWithoutValidUnderscore = strings.TrimLeft(label, "_")
+		}
+
+		// prepend or append some character to check for RFC compatibility for non-inner labels.
+		//
+		// But don't do this if there is no variableToken on the left or the right, i.e. these
+		// tokens are the most left or the most right ones in the pattern.
+		pre := ""
+		post := ""
+		if i == 0 && !leftMost {
+			pre = "a"
+		}
+		if i == len(labels)-1 && !rightMost {
+			post = "a"
+		}
+
+		if escapedLabel := spec(pre + labelWithoutValidUnderscore + post); pre+labelWithoutValidUnderscore+post != escapedLabel {
+			return nil, fmt.Errorf("pattern substring %v is no valid label", label)
+		}
+		tokens = append(tokens, stringToken(label))
+	}
+	return tokens, nil
+}
+
 // Compile compiles domainPatterns. This code only runs for a handful of patterns
 // per InsertState run, i.e. is not time critical.
 func (dp DomainPattern) Compile(spec labels.Func) (*CompiledDomainPattern, error) {
@@ -59,60 +115,7 @@ func (dp DomainPattern) Compile(spec labels.Func) (*CompiledDomainPattern, error
 	// split pattern into tokens: strings, separators and {variables}
 	varRE, err := regexp.Compile(`{[\s\w-:]*}`)
 	if err != nil {
-		logging.Error.Fatalf("invalid regular expression for variables in domain pattern: ", err)
-	}
-
-	addNonVariableTokens := func(s string, leftMost, rightMost bool) error {
-		if s == "" {
-			return nil
-		}
-
-		if s == "." {
-			tokens = append(tokens, separatorToken{})
-			return nil
-		}
-
-		labels := strings.Split(s, ".")
-		for i, label := range labels {
-			if i != 0 {
-				tokens = append(tokens, separatorToken{})
-			}
-
-			// "" and first or last => . at the left or right of s, skip empty string
-			if label == "" && (i == 0 || i == len(labels)-1) {
-				continue
-			}
-
-			// "" and not the first or last => consecutive separators
-			if label == "" && i > 0 && i < len(labels)-1 {
-				return fmt.Errorf("invalid consecutive separators in domain pattern %v", dp)
-			}
-
-			// special case for valid underscores: trim them for spec comparison below
-			labelWithoutValidUnderscore := label
-			if (label[0] == '_' && label != "_") || (label == "_" && !rightMost) {
-				labelWithoutValidUnderscore = strings.TrimLeft(label, "_")
-			}
-
-			// prepend or append some character to check for RFC compatibility for non-inner labels.
-			//
-			// But don't do this if there is no variableToken on the left or the right, i.e. these
-			// tokens are the most left or the most right ones in the pattern.
-			pre := ""
-			post := ""
-			if i == 0 && !leftMost {
-				pre = "a"
-			}
-			if i == len(labels)-1 && !rightMost {
-				post = "a"
-			}
-
-			if escapedLabel := spec(pre + labelWithoutValidUnderscore + post); pre+labelWithoutValidUnderscore+post != escapedLabel {
-				return fmt.Errorf("pattern substring %v of domain pattern %v is no valid label", label, dp)
-			}
-			tokens = append(tokens, stringToken(label))
-		}
-		return nil
+		logging.Error.Fatalf("invalid regular expression for variables in domain pattern: %v", err)
 	}
 
 	// find variable references and work through the index list
@@ -129,9 +132,9 @@ func (dp DomainPattern) Compile(spec labels.Func) (*CompiledDomainPattern, error
 
 		// create token for everything in front of the variable
 		leftMost := i == 0
-		err := addNonVariableTokens(string(dp)[oldRight:left], leftMost, false)
+		tokens, err = addNonVariableTokens(tokens, string(dp)[oldRight:left], leftMost, false, spec)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("invalid domain pattern %v: %v", dp, err)
 		}
 
 		// add the actual variable token
@@ -144,9 +147,9 @@ func (dp DomainPattern) Compile(spec labels.Func) (*CompiledDomainPattern, error
 	// add pending tokens behind the last variable
 	leftMost := len(varMatches) == 0
 	rightMost := true
-	err = addNonVariableTokens(string(dp)[oldRight:len(dp)], leftMost, rightMost)
+	tokens, err = addNonVariableTokens(tokens, string(dp)[oldRight:len(dp)], leftMost, rightMost, spec)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("invalid domain pattern %v: %v", dp, err)
 	}
 
 	// check that the first and the last token is not a separator
