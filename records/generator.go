@@ -358,8 +358,8 @@ func (rg *RecordGenerator) listenerRecord(listener string, ns string) {
 func (rg *RecordGenerator) taskRecords(sj state.State, domain string, spec labels.Func,
 	domainPatterns []patterns.DomainPattern) {
 	// pre-compile the patterns. Only do this once before all the records.
-	compiledPatterns  := compileNonCanonicalPatterns(domainPatterns, spec)
-	canonicalPattern  := compileEssentialPatterns("{name}-{task-id-hash}-{slave-id-short}.{framework}", spec)
+	compiledPatterns := compileNonCanonicalPatterns(domainPatterns, spec)
+	canonicalPattern := compileEssentialPatterns("{name}-{task-id-hash}-{slave-id-short}.{framework}", spec)
 	tcpRFC2782Pattern := compileEssentialPatterns("_{name}._tcp.{framework}", spec)
 	udpRFC2782Pattern := compileEssentialPatterns("_{name}._udp.{framework}", spec)
 
