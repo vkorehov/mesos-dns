@@ -200,7 +200,7 @@ func testRecords(t *testing.T, domainPatterns []patterns.DomainPattern, spec lab
 		}
 
 		if got := rrs[tt.name]; !reflect.DeepEqual(got, tt.want) {
-			t.Errorf("test #%d: %s record for %q: got: %q, want: %q", i, tt.kind, tt.name, got, tt.want)
+			t.Errorf("test #%d: %d record for %q: got: %q, want: %q", i, tt.kind, tt.name, got, tt.want)
 		}
 	}
 }
