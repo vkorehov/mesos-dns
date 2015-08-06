@@ -50,7 +50,6 @@ func TestCompile(t *testing.T) {
 
 		{"abc.def.ghi", labels.RFC952, false},
 		{"abc.def123.ghi", labels.RFC952, false},
-
 	} {
 		_, err := DomainPattern(ts.pattern).Compile(ts.rfc)
 		if err != nil && !ts.err {

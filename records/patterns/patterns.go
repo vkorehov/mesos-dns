@@ -192,25 +192,25 @@ func (cdp *CompiledDomainPattern) Pattern() DomainPattern {
 	return cdp.pattern
 }
 
-func (spl separatorToken) interpolate(context PatternContext) (string, error) {
+func (t separatorToken) interpolate(context PatternContext) (string, error) {
 	return ".", nil
 }
 
-func (spl stringToken) interpolate(context PatternContext) (string, error) {
-	return string(spl), nil
+func (t stringToken) interpolate(context PatternContext) (string, error) {
+	return string(t), nil
 }
 
-func (vpl variableToken) interpolate(context PatternContext) (string, error) {
-	value := context[string(vpl)]
+func (t variableToken) interpolate(context PatternContext) (string, error) {
+	value := context[string(t)]
 	if value == "" {
-		return "", fmt.Errorf("%q is not defined in the pattern context %v", vpl, context)
+		return "", fmt.Errorf("%q is not defined in the pattern context %v", t, context)
 	}
 	return value, nil
 }
 
-func (vpl separatorToken) isSeparator() bool { return true }
-func (vpl stringToken) isSeparator() bool    { return false }
-func (vpl variableToken) isSeparator() bool  { return false }
+func (t separatorToken) isSeparator() bool { return true }
+func (t stringToken) isSeparator() bool    { return false }
+func (t variableToken) isSeparator() bool  { return false }
 
 // NewPatternContext creates a patternContext for a given task and a label spec
 func NewPatternContext(task *state.Task, framework string, spec labels.Func) PatternContext {
