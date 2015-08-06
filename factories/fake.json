@@ -299,6 +299,10 @@
                                 {
                                     "key" : "dc",
                                     "value" : "de1"
+                                },
+                                {
+                                    "key" : "canary",
+                                    "value" : "Teneriffa"
                                 }
                             ]
                         },
@@ -309,7 +313,7 @@
                     "executor_id": "",
                     "framework_id": "20140703-014514-3041283216-5050-5348-0000",
                     "id": "liquor-store.b71166c1-562f-11e4-a088-c20493233aa5",
-                    "name": "liquor-store",
+                    "name": "non-human-readable-liquor-store",
                     "resources": {
                         "cpus": 1,
                         "disk": 0,
@@ -353,6 +357,10 @@
                                 {
                                     "key" : "dc",
                                     "value" : "de1"
+                                },
+                                {
+                                    "key" : "canary",
+                                    "value" : "Lanzarote"
                                 }
                             ]
                         },
