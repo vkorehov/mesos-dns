@@ -76,8 +76,11 @@ type Config struct {
 	// EnforceRFC952 will enforce an older, more strict set of rules for DNS labels
 	EnforceRFC952 bool
 
-	// Templates are text/template style templates for A-records of Mesos tasks
-	Templates []tmpl.Template
+	// Templates are templates for A-records of Mesos tasks
+	Templates []string
+
+	// templates holds the configured compiled templates.
+	templates []tmpl.Template
 }
 
 // SetConfig instantiates a Config struct read in from config.json
@@ -104,6 +107,21 @@ func SetConfig(cjson string) Config {
 		if err = validateResolvers(c.Resolvers); err != nil {
 			logging.Error.Fatalf("Resovlers validation failed: %v", err)
 		}
+	}
+
+	c.Templates = unique(append(c.Templates,
+		"{name}.{framework}",
+		"{name}-{task-id-hash}-{slave-id-short}.{framework}",
+		"_{name}._tcp.{framework}",
+		"_{name}._udp.{framework}",
+	))
+
+	for _, template := range c.Templates {
+		t, err := tmpl.New(template)
+		if err != nil {
+			logging.Error.Fatalf("failed to compile %q: %s", template, err)
+		}
+		c.templates = append(c.templates, t)
 	}
 
 	c.Domain = strings.ToLower(c.Domain)
@@ -163,7 +181,6 @@ func readConfig(file string) (*Config, error) {
 		HTTPOn:         true,
 		ExternalOn:     true,
 		RecurseOn:      true,
-		Templates:      tmpl.DefaultTemplates(),
 	}
 
 	usr, err := user.Current()
@@ -181,6 +198,18 @@ func readConfig(file string) (*Config, error) {
 	}
 
 	return &c, nil
+}
+
+func unique(ss []string) []string {
+	set := make(map[string]struct{}, len(ss))
+	out := make([]string, 0, len(ss))
+	for _, s := range ss {
+		if _, ok := set[s]; !ok {
+			set[s] = struct{}{}
+			out = append(out, s)
+		}
+	}
+	return out
 }
 
 // GetLocalDNS returns the first nameserver in /etc/resolv.conf

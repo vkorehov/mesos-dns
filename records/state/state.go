@@ -56,7 +56,7 @@ type Task struct {
 	State       string   `json:"state"`
 	Statuses    []Status `json:"statuses"`
 	Resources   `json:"resources"`
-	Discovery   *DiscoveryInfo `json:"discovery"`
+	Discovery   DiscoveryInfo `json:"discovery"`
 }
 
 // ContainerIP extracts a container ip from a Mesos state.json task. If not
@@ -127,11 +127,11 @@ type State struct {
 
 // DiscoveryInfo holds the discovery meta data for a task defined in the /state.json Mesos HTTP endpoint.
 type DiscoveryInfo struct {
-	Visibilty   string  `json:"visibility"`
-	Version     *string `json:"version,omitempty"`
-	Name        *string `json:"name,omitempty"`
-	Location    *string `json:"location,omitempty"`
-	Environment *string `json:"environment,omitempty"`
+	Visibilty   string `json:"visibility"`
+	Version     string `json:"version,omitempty"`
+	Name        string `json:"name,omitempty"`
+	Location    string `json:"location,omitempty"`
+	Environment string `json:"environment,omitempty"`
 	Labels      struct {
 		Labels `json:"labels"`
 	} `json:"labels"`

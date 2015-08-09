@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"hash/fnv"
 	"io/ioutil"
 	"net"
 	"net/http"
@@ -52,7 +53,7 @@ func (rg *RecordGenerator) ParseState(leader string, c Config) error {
 		hostSpec = labels.RFC952
 	}
 
-	return rg.InsertState(sj, c.Domain, c.SOARname, c.Listener, c.Masters, hostSpec, c.Templates)
+	return rg.InsertState(sj, c.Domain, c.SOARname, c.Listener, c.Masters, hostSpec, c.templates)
 }
 
 // Tries each master and looks for the leader
@@ -170,27 +171,6 @@ func hostToIP4(hostname string) (string, bool) {
 		ip = t.IP
 	}
 	return ip.String(), true
-}
-
-func compileNonCanonicalTemplates(ts []tmpl.Template, spec labels.Func) []*tmpl.Compiled {
-	compiled := make([]*tmpl.Compiled, 0, len(ts))
-	for _, t := range ts {
-		c, err := t.Compile(spec)
-		if err != nil {
-			logging.Error.Println(err)
-			continue
-		}
-		compiled = append(compiled, c)
-	}
-	return compiled
-}
-
-func compileEssentialTemplates(t tmpl.Template, spec labels.Func) *tmpl.Compiled {
-	compiled, err := t.Compile(spec)
-	if err != nil {
-		logging.Error.Fatalf("cannot compile invalid template %q: %v", t, err)
-	}
-	return compiled
 }
 
 // InsertState transforms a StateJSON into RecordGenerator RRs
@@ -355,14 +335,8 @@ func (rg *RecordGenerator) listenerRecord(listener string, ns string) {
 }
 
 func (rg *RecordGenerator) taskRecords(sj state.State, domain string, spec labels.Func,
-	templates []tmpl.Template) {
-	// pre-compile the tmpl. Only do this once before all the records.
-	compiledTemplates := compileNonCanonicalTemplates(templates, spec)
-	canonicalTemplate := compileEssentialTemplates("{name}-{task-id-hash}-{slave-id-short}.{framework}", spec)
-	tcpRFC2782Template := compileEssentialTemplates("_{name}._tcp.{framework}", spec)
-	udpRFC2782Template := compileEssentialTemplates("_{name}._udp.{framework}", spec)
+	templates map[*tmpl.Template]func(*state.Task) (string, string)) {
 
-	// complete crap - refactor me
 	for _, f := range sj.Frameworks {
 		// insert taks records
 		fname := labels.DomainFrag(f.Name, labels.Sep, spec)
@@ -374,8 +348,11 @@ func (rg *RecordGenerator) taskRecords(sj state.State, domain string, spec label
 				continue
 			}
 
-			// context used to build domain names
-			ctx := tmpl.NewContext(&task, fname, spec)
+			ctx := taskContext(&task, fname, domain)
+			for t, recfn := range templates {
+				name, rrtype := recfn(&task)
+				rg.insertRR(t.Execute(ctx), name, rrtype)
+			}
 
 			// insert canonical A records
 			trec, err := canonicalTemplate.Execute(ctx, domain)
@@ -536,4 +513,51 @@ func getProto(pair string) (string, string, error) {
 		return "", "", fmt.Errorf("unable to parse proto from %q", pair)
 	}
 	return h[0], h[1], nil
+}
+
+// recordsfn takes a *state.Task and returns records
+type recordsfn func(*state.Task) (record, rrtype string)
+
+// taskContext creates a tmpl.Context for a given task, framework and domain.
+func taskContext(t *state.Task, framework, domain string) tmpl.Context {
+	ctx := tmpl.Context{
+		"framework":      framework,
+		"domain":         domain,
+		"slave-id-short": slaveIDTail(t.SlaveID),
+		"slave-id":       t.SlaveID,
+		"task-id":        t.ID,
+		"task-id-hash":   hashString(t.ID),
+		"name":           t.Name,
+		"version":        t.Discovery.Version,
+		"location":       t.Discovery.Location,
+		"environment":    t.Discovery.Environment,
+	}
+
+	for _, label := range t.Discovery.Labels.Labels {
+		ctx["label:"+label.Key] = label.Value
+	}
+
+	// use discovery name of task name if defined
+	if t.Discovery.Name != "" {
+		ctx["name"] = t.Discovery.Name
+	}
+
+	return ctx
+}
+
+// return the slave number from a Mesos slave id
+func slaveIDTail(slaveID string) string {
+	fields := strings.Split(slaveID, "-")
+	return strings.ToLower(fields[len(fields)-1])
+}
+
+// BUG: The probability of hashing collisions is too high with only 17 bits.
+// NOTE: Using a numerical base as high as valid characters in DNS names would
+// reduce the resulting length without risking more collisions.
+func hashString(s string) string {
+	h := fnv.New32a()
+	_, _ = h.Write([]byte(s))
+	sum := h.Sum32()
+	lower, upper := uint16(sum), uint16(sum>>16)
+	return strconv.FormatUint(uint64(lower+upper), 10)
 }
