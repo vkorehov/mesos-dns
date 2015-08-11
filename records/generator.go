@@ -403,28 +403,33 @@ func newHostContext(task *state.Task, nameCtx tmpl.Context, domain string, ipSou
 	return ctx, nil
 }
 
-type recordTemplate struct {
+// recordGroup represents a set of records with the same domain and the same target host
+type recordGroup struct {
 	tmpls  []*tmpl.Compiled
 	domain string
 	host   string
 }
 
-func (rg *RecordGenerator) addTaskRecords(tmpl recordTemplate, nameCtx, hostCtx tmpl.Context, hostPostfix, kind string) {
-	host := hostCtx[tmpl.host]
-	if host == "" {
-		return
-	}
-	for _, t := range tmpl.tmpls {
-		name, err := t.Execute(nameCtx)
-		if err != nil {
-			continue // this error is totally normal when variables are not defined. Don't print anything.
+func (rg *RecordGenerator) addTaskRecords(groups []recordGroup, nameCtx, hostCtx tmpl.Context, hostPostfix, kind string) {
+	for _, g := range groups {
+		host := hostCtx[g.host]
+		if host == "" {
+			return
 		}
-		rg.insertRR(name+"."+tmpl.domain+".", host+hostPostfix, kind)
+
+		for _, t := range g.tmpls {
+			name, err := t.Execute(nameCtx)
+			if err != nil {
+				continue // this error is totally normal when variables are not defined. Don't print anything.
+			}
+
+			rg.insertRR(name+"."+g.domain+".", host+hostPostfix, kind)
+		}
 	}
 }
 
 func (rg *RecordGenerator) taskRecords(sj state.State, domain string, ipSources []string, templates []tmpl.Template, spec labels.Func,
-	) {
+) {
 
 	// pre-compile the name templates
 	compiledTmpl := compileNonCanonicalTemplates(templates, spec)
@@ -433,19 +438,19 @@ func (rg *RecordGenerator) taskRecords(sj state.State, domain string, ipSources 
 	udpRFC2782Tmpl := compileEssentialTemplates("_{name}._udp.{framework}", spec)
 	diTmpl := compileEssentialTemplates("_{name}._{port-protocol}.{framework}", spec)
 
-	// records to create
-	aTmpls := []recordTemplate{
+	// record groups to create
+	aGroups := []recordGroup{
 		{append(compiledTmpl, canonicalTmpl), domain, "task-ip"},
 		{append(compiledTmpl, canonicalTmpl), "slave." + domain, "slave-ip"},
 	}
 
-	srvTaskTmpl := []recordTemplate{
+	srvTaskGroups := []recordGroup{
 		{[]*tmpl.Compiled{tcpRFC2782Tmpl, udpRFC2782Tmpl}, "slave." + domain, "slave-canonical"},
 	}
-	srvNoDiscoveryInfoTmpls := []recordTemplate{
+	srvNoDiscoveryInfoGroups := []recordGroup{
 		{[]*tmpl.Compiled{tcpRFC2782Tmpl, udpRFC2782Tmpl}, domain, "canonical"},
 	}
-	srvDiscoveryInfoTmpls := []recordTemplate{
+	srvDiscoveryInfoGroups := []recordGroup{
 		{[]*tmpl.Compiled{diTmpl}, domain, "canonical"},
 	}
 
@@ -466,15 +471,11 @@ func (rg *RecordGenerator) taskRecords(sj state.State, domain string, ipSources 
 			}
 
 			// create A records
-			for _, t := range aTmpls {
-				rg.addTaskRecords(t, nameCtx, hostCtx, "", "A")
-			}
+			rg.addTaskRecords(aGroups, nameCtx, hostCtx, "", "A")
 
 			// create task SRV records created with and without DiscoveryInfo
 			for _, port := range task.Ports() {
-				for _, t := range srvTaskTmpl {
-					rg.addTaskRecords(t, nameCtx, hostCtx, ":"+port, "SRV")
-				}
+				rg.addTaskRecords(srvTaskGroups, nameCtx, hostCtx, ":"+port, "SRV")
 			}
 
 			if task.HasDiscoveryInfo() {
@@ -482,16 +483,12 @@ func (rg *RecordGenerator) taskRecords(sj state.State, domain string, ipSources 
 				for _, port := range task.DiscoveryInfo.Ports.DiscoveryPorts {
 					nameCtx["port-protocol"] = spec(port.Protocol)
 					nameCtx["port-name"] = spec(port.Name)
-					for _, t := range srvDiscoveryInfoTmpls {
-						rg.addTaskRecords(t, nameCtx, hostCtx, ":"+strconv.Itoa(port.Number), "SRV")
-					}
+					rg.addTaskRecords(srvDiscoveryInfoGroups, nameCtx, hostCtx, ":"+strconv.Itoa(port.Number), "SRV")
 				}
 			} else {
 				// create task SRV records created only without DiscoveryInfo
 				for _, port := range task.Ports() {
-					for _, t := range srvNoDiscoveryInfoTmpls {
-						rg.addTaskRecords(t, nameCtx, hostCtx, ":"+port, "SRV")
-					}
+					rg.addTaskRecords(srvNoDiscoveryInfoGroups, nameCtx, hostCtx, ":"+port, "SRV")
 				}
 			}
 		}
