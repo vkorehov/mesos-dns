@@ -179,7 +179,10 @@ func (c *Compiled) Execute(ctx Context) (string, error) {
 		if err != nil {
 			return "", err
 		}
-		buffer.WriteString(label)
+		_, err = buffer.WriteString(label)
+		if err != nil {
+			return "", err
+		}
 	}
 	return buffer.String(), nil
 }
