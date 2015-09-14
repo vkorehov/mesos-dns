@@ -28,19 +28,19 @@
 		},
 		{
 			"ImportPath": "github.com/mesos/mesos-go/detector",
-			"Rev": "65cb9ffec50a76f4ed9fe4808405b66b3bb7010d"
+			"Rev": "a417dbaf942a87bf08f9dc9c5c8f7ec60176cf14"
 		},
 		{
 			"ImportPath": "github.com/mesos/mesos-go/mesosproto",
-			"Rev": "65cb9ffec50a76f4ed9fe4808405b66b3bb7010d"
+			"Rev": "a417dbaf942a87bf08f9dc9c5c8f7ec60176cf14"
 		},
 		{
 			"ImportPath": "github.com/mesos/mesos-go/mesosutil",
-			"Rev": "65cb9ffec50a76f4ed9fe4808405b66b3bb7010d"
+			"Rev": "a417dbaf942a87bf08f9dc9c5c8f7ec60176cf14"
 		},
 		{
 			"ImportPath": "github.com/mesos/mesos-go/upid",
-			"Rev": "65cb9ffec50a76f4ed9fe4808405b66b3bb7010d"
+			"Rev": "a417dbaf942a87bf08f9dc9c5c8f7ec60176cf14"
 		},
 		{
 			"ImportPath": "github.com/miekg/dns",
