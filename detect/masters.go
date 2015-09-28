@@ -106,7 +106,7 @@ func masterHostPort(info *mesos.MasterInfo) string {
 	if host == "" {
 		// unpack IPv4
 		octets := make([]byte, 4)
-		binary.BigEndian.PutUint32(octets, info.GetIp())
+		binary.LittleEndian.PutUint32(octets, info.GetIp())
 		ipv4 := net.IP(octets)
 		host = ipv4.String()
 	}
