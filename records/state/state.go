@@ -162,7 +162,8 @@ func statusIPs(st []Status, src func(*Status) []string) []string {
 	// https://github.com/apache/mesos/blob/0.24.0/src/slave/slave.cpp#L5226-L5238
 	ts, j := -1.0, -1
 	for i := range st {
-		if st[i].State == "TASK_RUNNING" && st[i].Timestamp > ts {
+		state := st[i].State
+		if (state == "TASK_RUNNING" || state == "TASK_STAGING") && st[i].Timestamp > ts {
 			ts, j = st[i].Timestamp, i
 		}
 	}
