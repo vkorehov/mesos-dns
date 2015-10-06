@@ -85,10 +85,10 @@ func Instrumentation(c logging.Counter) Decorator {
 type Recurser func(*dns.Msg) string
 
 // Recurse is the default Mesos-DNS Recurser which returns an addr (host:port)
-// only when the given dns.Msg doesn't contain authoritative answers and has at
-// least one SOA record in its NS section.
+// only when the given dns.Msg doesn't doesn't contain answers or isn't
+// authoritative and has at least one SOA record in its NS section.
 func Recurse(r *dns.Msg) string {
-	if r.Authoritative && len(r.Answer) > 0 {
+	if r.Authoritative || len(r.Answer) > 0 {
 		return ""
 	}
 

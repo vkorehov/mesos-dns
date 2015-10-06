@@ -61,45 +61,32 @@ func TestRecurse(t *testing.T) {
 		*dns.Msg
 		want string
 	}{
-		{ // Authoritative with answers
+		{ // Authoritative, no answers
+			Message(Header(true, 0)),
+			"",
+		},
+		{ // Authoritative, with answers
 			Message(
 				Header(true, 0),
-				Answers(
-					A(RRHeader("localhost", dns.TypeA, 0), net.IPv6loopback.To4()),
-				),
-				NSs(
-					SOA(RRHeader("", dns.TypeSOA, 0), "next", "", 0),
-				),
+				Answers(A(RRHeader("localhost", dns.TypeA, 0), net.IPv6loopback.To4())),
 			),
 			"",
 		},
-		{ // Authoritative, empty answers, no SOA records
+		{ // Not authoritative, with answers
 			Message(
-				Header(true, 0),
-				NSs(
-					NS(RRHeader("", dns.TypeNS, 0), "next"),
-				),
+				Header(false, 0),
+				Answers(A(RRHeader("localhost", dns.TypeA, 0), net.IPv6loopback.To4())),
 			),
 			"",
 		},
-		{ // Not authoritative, no SOA record
+		{ // Not authoritative, no answers, no SOA record
 			Message(Header(false, 0)),
 			"",
 		},
-		{ // Not authoritative, one SOA record
+		{ // Not authoritative, no answers, one SOA record
 			Message(
 				Header(false, 0),
 				NSs(SOA(RRHeader("", dns.TypeSOA, 0), "next", "", 0)),
-			),
-			"next:53",
-		},
-		{ // Authoritative, empty answers, one SOA record
-			Message(
-				Header(true, 0),
-				NSs(
-					NS(RRHeader("", dns.TypeNS, 0), "foo"),
-					SOA(RRHeader("", dns.TypeSOA, 0), "next", "", 0),
-				),
 			),
 			"next:53",
 		},
