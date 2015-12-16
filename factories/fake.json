@@ -223,7 +223,7 @@
                     "executor_id": "",
                     "framework_id": "20140703-014514-3041283216-5050-5348-0000",
                     "id": "liquor-store.b8db9f73-562f-11e4-a088-c20493233aa5",
-                    "name": "liquor-store",
+                    "name": "liquor.store",
                     "resources": {
                         "cpus": 1,
                         "disk": 0,
@@ -283,7 +283,7 @@
                     "discovery" : {
                         "version" : "1.0",
                         "visibility" : "CLUSTER",
-                        "name" : "liquor-store",
+                        "name" : "liquor.store",
                         "ports" : {
                             "ports" : [
                                 {
@@ -346,7 +346,7 @@
                     "discovery" : {
                         "version" : "1.0",
                         "visibility" : "CLUSTER",
-                        "name" : "liquor-store",
+                        "name" : "liquor.store",
                         "ports" : {
                             "ports" : [
                                 {
@@ -381,7 +381,7 @@
                     "executor_id": "",
                     "framework_id": "20140703-014514-3041283216-5050-5348-0000",
                     "id": "car-store.43758382-562f-11e4-a088-c20493233aa5",
-                    "name": "car-store",
+                    "name": "car.store",
                     "resources": {
                         "cpus": 1,
                         "disk": 0,

@@ -387,7 +387,7 @@ func (rg *RecordGenerator) taskRecords(sj state.State, domain string, spec label
 
 			// use DiscoveryInfo name if defined instead of task name
 			if task.HasDiscoveryInfo() {
-				ctx.taskName = task.DiscoveryInfo.Name
+				ctx.taskName = spec(task.DiscoveryInfo.Name)
 			}
 
 			// insert canonical A records
