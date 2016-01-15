@@ -423,6 +423,19 @@ func (rg *RecordGenerator) taskRecords(sj state.State, domain string, spec label
 			for _, port := range task.DiscoveryInfo.Ports.DiscoveryPorts {
 				target := canonical + tail + ":" + strconv.Itoa(port.Number)
 
+				// special SRV records if a discovery port has a name
+				if portName := spec(port.Name); portName != "" {
+					// _portName._protocol.taskName.fname.tail
+					protocols := []string{"tcp", "udp"}
+					if customProto := spec(port.Protocol); customProto != "" {
+						protocols = []string{customProto}
+					}
+					for _, proto := range protocols {
+						name := "_" + portName + "._" + proto + "." + ctx.taskName + "." + fname
+						rg.insertRR(name+tail, target, "SRV")
+					}
+				}
+
 				// use protocol if defined, fallback to tcp+udp
 				proto := spec(port.Protocol)
 				if proto != "" {
