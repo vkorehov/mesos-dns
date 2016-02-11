@@ -24,6 +24,24 @@ func init() {
 	logging.SetupLogs()
 }
 
+func (rg *RecordGenerator) exists(name, host, rtype string) bool {
+	if rtype == "A" {
+		if val, ok := rg.As[name]; ok {
+			// check if A record already exists
+			// identical tasks on same slave
+			_, ok := val[host]
+			return ok
+		}
+	} else {
+		if val, ok := rg.SRVs[name]; ok {
+			// check if SRV record already exists
+			_, ok := val[host]
+			return ok
+		}
+	}
+	return false
+}
+
 func TestMasterRecord(t *testing.T) {
 	// masterRecord(domain string, masters []string, leader string)
 	type expectedRR struct {
@@ -139,9 +157,9 @@ func TestMasterRecord(t *testing.T) {
 				t.Fatalf("test case %d: missing expected record: name=%q host=%q rtype=%s, As=%v", i+1, e.name, e.host, e.rtype, rg.As)
 			}
 			if e.rtype == "A" {
-				expectedA[e.name] = append(expectedA[e.name], e.host)
+				expectedA.add(e.name, e.host)
 			} else {
-				expectedSRV[e.name] = append(expectedSRV[e.name], e.host)
+				expectedSRV.add(e.name, e.host)
 			}
 		}
 		if !reflect.DeepEqual(rg.As, expectedA) {
@@ -244,8 +262,16 @@ func TestInsertState(t *testing.T) {
 		{rgDocker.As, "nginx.marathon.mesos.", []string{"1.2.3.11"}},
 		{rgDocker.As, "car-store.marathon.slave.mesos.", []string{"1.2.3.11"}},
 	} {
-		if got := tt.rrs[tt.name]; !reflect.DeepEqual(got, tt.want) {
-			t.Errorf("test #%d: %q: got: %q, want: %q", i, tt.name, got, tt.want)
+		// convert want into a map[string]struct{} for simpler comparison
+		want := map[string]struct{}{}
+		for _, x := range tt.want {
+			want[x] = struct{}{}
+		}
+		if got := tt.rrs[tt.name]; !reflect.DeepEqual(got, want) {
+			if len(got) == 0 && len(want) == 0 {
+				continue
+			}
+			t.Errorf("test #%d: %q: got: %q, want: %q", i, tt.name, got, want)
 		}
 	}
 }

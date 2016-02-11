@@ -25,7 +25,51 @@ import (
 // Map host/service name to DNS answer
 // REFACTOR - when discoveryinfo is integrated
 // Will likely become map[string][]discoveryinfo
-type rrs map[string][]string
+type rrs map[string]map[string]struct{}
+
+func (r rrs) add(name, host string) bool {
+	if host == "" {
+		return false
+	}
+	v, ok := r[name]
+	if !ok {
+		v = make(map[string]struct{})
+		r[name] = v
+	} else {
+		// don't overwrite existing values
+		_, ok = v[host]
+		if ok {
+			return false
+		}
+	}
+	v[host] = struct{}{}
+	return true
+}
+
+func (r rrs) First(name string) (string, bool) {
+	for host := range r[name] {
+		return host, true
+	}
+	return "", false
+}
+
+type rrsKind string
+
+const (
+	A   rrsKind = "A"
+	SRV         = "SRV"
+)
+
+func (kind rrsKind) rrs(rg *RecordGenerator) rrs {
+	switch kind {
+	case A:
+		return rg.As
+	case SRV:
+		return rg.SRVs
+	default:
+		return nil
+	}
+}
 
 // RecordGenerator contains DNS records and methods to access and manipulate
 // them. TODO(kozyraki): Refactor when discovery id is available.
@@ -226,10 +270,10 @@ func (rg *RecordGenerator) frameworkRecords(sj state.State, domain string, spec 
 		host, port := f.HostPort()
 		if address, ok := hostToIP4(host); ok {
 			a := fname + "." + domain + "."
-			rg.insertRR(a, address, "A")
+			rg.insertRR(a, address, A)
 			if port != "" {
 				srv := net.JoinHostPort(a, port)
-				rg.insertRR("_framework._tcp."+a, srv, "SRV")
+				rg.insertRR("_framework._tcp."+a, srv, SRV)
 			}
 		}
 	}
@@ -243,9 +287,9 @@ func (rg *RecordGenerator) slaveRecords(sj state.State, domain string, spec labe
 		address, ok := hostToIP4(slave.PID.Host)
 		if ok {
 			a := "slave." + domain + "."
-			rg.insertRR(a, address, "A")
+			rg.insertRR(a, address, A)
 			srv := net.JoinHostPort(a, slave.PID.Port)
-			rg.insertRR("_slave._tcp."+domain+".", srv, "SRV")
+			rg.insertRR("_slave._tcp."+domain+".", srv, SRV)
 		} else {
 			logging.VeryVerbose.Printf("string '%q' for slave with id %q is not a valid IP address", address, slave.ID)
 			address = labels.DomainFrag(address, labels.Sep, spec)
@@ -295,16 +339,16 @@ func (rg *RecordGenerator) masterRecord(domain string, masters []string, leader 
 		return
 	}
 	arec := "leader." + domain + "."
-	rg.insertRR(arec, ip, "A")
+	rg.insertRR(arec, ip, A)
 	arec = "master." + domain + "."
-	rg.insertRR(arec, ip, "A")
+	rg.insertRR(arec, ip, A)
 
 	// SRV records
 	tcp := "_leader._tcp." + domain + "."
 	udp := "_leader._udp." + domain + "."
 	host := "leader." + domain + "." + ":" + port
-	rg.insertRR(tcp, host, "SRV")
-	rg.insertRR(udp, host, "SRV")
+	rg.insertRR(tcp, host, SRV)
+	rg.insertRR(udp, host, SRV)
 
 	// if there is a list of masters, insert that as well
 	addedLeaderMasterN := false
@@ -319,7 +363,7 @@ func (rg *RecordGenerator) masterRecord(domain string, masters []string, leader 
 		// A records (master and masterN)
 		if master != leaderAddress {
 			arec := "master." + domain + "."
-			added := rg.insertRR(arec, masterIP, "A")
+			added := rg.insertRR(arec, masterIP, A)
 			if !added {
 				// duplicate master?!
 				continue
@@ -332,7 +376,7 @@ func (rg *RecordGenerator) masterRecord(domain string, masters []string, leader 
 		}
 
 		arec := "master" + strconv.Itoa(idx) + "." + domain + "."
-		rg.insertRR(arec, masterIP, "A")
+		rg.insertRR(arec, masterIP, A)
 		idx++
 
 		if master == leaderAddress {
@@ -346,7 +390,7 @@ func (rg *RecordGenerator) masterRecord(domain string, masters []string, leader 
 			logging.Error.Printf("warning: leader %q is not in master list", leader)
 		}
 		arec = "master" + strconv.Itoa(idx) + "." + domain + "."
-		rg.insertRR(arec, ip, "A")
+		rg.insertRR(arec, ip, A)
 	}
 }
 
@@ -355,9 +399,9 @@ func (rg *RecordGenerator) listenerRecord(listener string, ns string) {
 	if listener == "0.0.0.0" {
 		rg.setFromLocal(listener, ns)
 	} else if listener == "127.0.0.1" {
-		rg.insertRR(ns, "127.0.0.1", "A")
+		rg.insertRR(ns, "127.0.0.1", A)
 	} else {
-		rg.insertRR(ns, listener, "A")
+		rg.insertRR(ns, listener, A)
 	}
 }
 
@@ -394,11 +438,11 @@ func (rg *RecordGenerator) taskRecords(sj state.State, domain string, spec label
 			canonical := ctx.taskName + "-" + ctx.taskID + "-" + ctx.slaveID + "." + fname
 			arec := ctx.taskName + "." + fname
 
-			rg.insertRR(arec+tail, ctx.taskIP, "A")
-			rg.insertRR(canonical+tail, ctx.taskIP, "A")
+			rg.insertRR(arec+tail, ctx.taskIP, A)
+			rg.insertRR(canonical+tail, ctx.taskIP, A)
 
-			rg.insertRR(arec+".slave"+tail, ctx.slaveIP, "A")
-			rg.insertRR(canonical+".slave"+tail, ctx.slaveIP, "A")
+			rg.insertRR(arec+".slave"+tail, ctx.slaveIP, A)
+			rg.insertRR(canonical+".slave"+tail, ctx.slaveIP, A)
 
 			// Add RFC 2782 SRV records
 			slaveHost := canonical + ".slave" + tail
@@ -408,12 +452,12 @@ func (rg *RecordGenerator) taskRecords(sj state.State, domain string, spec label
 				slaveTarget := slaveHost + ":" + port
 
 				if !task.HasDiscoveryInfo() {
-					rg.insertRR(tcpName+tail, slaveTarget, "SRV")
-					rg.insertRR(udpName+tail, slaveTarget, "SRV")
+					rg.insertRR(tcpName+tail, slaveTarget, SRV)
+					rg.insertRR(udpName+tail, slaveTarget, SRV)
 				}
 
-				rg.insertRR(tcpName+".slave"+tail, slaveTarget, "SRV")
-				rg.insertRR(udpName+".slave"+tail, slaveTarget, "SRV")
+				rg.insertRR(tcpName+".slave"+tail, slaveTarget, SRV)
+				rg.insertRR(udpName+".slave"+tail, slaveTarget, SRV)
 			}
 
 			if !task.HasDiscoveryInfo() {
@@ -427,10 +471,10 @@ func (rg *RecordGenerator) taskRecords(sj state.State, domain string, spec label
 				proto := spec(port.Protocol)
 				if proto != "" {
 					name := "_" + ctx.taskName + "._" + proto + "." + fname
-					rg.insertRR(name+tail, target, "SRV")
+					rg.insertRR(name+tail, target, SRV)
 				} else {
-					rg.insertRR(tcpName+tail, target, "SRV")
-					rg.insertRR(udpName+tail, target, "SRV")
+					rg.insertRR(tcpName+tail, target, SRV)
+					rg.insertRR(udpName+tail, target, SRV)
 				}
 			}
 		}
@@ -473,53 +517,21 @@ func (rg *RecordGenerator) setFromLocal(host string, ns string) {
 				continue
 			}
 
-			rg.insertRR(ns, ip.String(), "A")
+			rg.insertRR(ns, ip.String(), A)
 		}
 	}
-}
-
-func (rg *RecordGenerator) exists(name, host, rtype string) bool {
-	if rtype == "A" {
-		if val, ok := rg.As[name]; ok {
-			// check if A record already exists
-			// identical tasks on same slave
-			for _, b := range val {
-				if b == host {
-					return true
-				}
-			}
-		}
-	} else {
-		if val, ok := rg.SRVs[name]; ok {
-			// check if SRV record already exists
-			for _, b := range val {
-				if b == host {
-					return true
-				}
-			}
-		}
-	}
-	return false
 }
 
 // insertRR adds a record to the appropriate record map for the given name/host pair,
 // but only if the pair is unique. returns true if added, false otherwise.
 // TODO(???): REFACTOR when storage is updated
-func (rg *RecordGenerator) insertRR(name, host, rtype string) bool {
-	if host == "" || rg.exists(name, host, rtype) {
-		return false
+func (rg *RecordGenerator) insertRR(name, host string, kind rrsKind) (added bool) {
+	if rrs := kind.rrs(rg); rrs != nil {
+		if added = rrs.add(name, host); added {
+			logging.VeryVerbose.Println("[" + string(kind) + "]\t" + name + ": " + host)
+		}
 	}
-
-	logging.VeryVerbose.Println("[" + rtype + "]\t" + name + ": " + host)
-
-	if rtype == "A" {
-		val := rg.As[name]
-		rg.As[name] = append(val, host)
-	} else {
-		val := rg.SRVs[name]
-		rg.SRVs[name] = append(val, host)
-	}
-	return true
+	return
 }
 
 // leaderIP returns the ip for the mesos master
