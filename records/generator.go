@@ -393,10 +393,13 @@ func (rg *RecordGenerator) taskRecords(sj state.State, domain string, spec label
 			// insert canonical A records
 			canonical := ctx.taskName + "-" + ctx.taskID + "-" + ctx.slaveID + "." + fname
 			arec := ctx.taskName + "." + fname
+			shortArec := ctx.taskName
 
 			rg.insertRR(arec+tail, ctx.taskIP, "A")
+			rg.insertRR(shortArec+tail, ctx.taskIP, "A")
 			rg.insertRR(canonical+tail, ctx.taskIP, "A")
 
+			rg.insertRR(shortArec+".slave"+tail, ctx.slaveIP, "A")
 			rg.insertRR(arec+".slave"+tail, ctx.slaveIP, "A")
 			rg.insertRR(canonical+".slave"+tail, ctx.slaveIP, "A")
 
@@ -404,16 +407,22 @@ func (rg *RecordGenerator) taskRecords(sj state.State, domain string, spec label
 			slaveHost := canonical + ".slave" + tail
 			tcpName := "_" + ctx.taskName + "._tcp." + fname
 			udpName := "_" + ctx.taskName + "._udp." + fname
+                        shortTcpName := "_" + ctx.taskName + "._tcp"
+                        shortUdpName := "_" + ctx.taskName + "._udp"
 			for _, port := range task.Ports() {
 				slaveTarget := slaveHost + ":" + port
 
 				if !task.HasDiscoveryInfo() {
+                                        rg.insertRR(shortTcpName+tail, slaveTarget, "SRV")
+                                        rg.insertRR(shortUdpName+tail, slaveTarget, "SRV")
 					rg.insertRR(tcpName+tail, slaveTarget, "SRV")
 					rg.insertRR(udpName+tail, slaveTarget, "SRV")
 				}
 
 				rg.insertRR(tcpName+".slave"+tail, slaveTarget, "SRV")
 				rg.insertRR(udpName+".slave"+tail, slaveTarget, "SRV")
+                                rg.insertRR(shortTcpName+".slave"+tail, slaveTarget, "SRV")
+                                rg.insertRR(shortUdpName+".slave"+tail, slaveTarget, "SRV")
 			}
 
 			if !task.HasDiscoveryInfo() {
@@ -427,10 +436,14 @@ func (rg *RecordGenerator) taskRecords(sj state.State, domain string, spec label
 				proto := spec(port.Protocol)
 				if proto != "" {
 					name := "_" + ctx.taskName + "._" + proto + "." + fname
+					shortName := "_" + ctx.taskName + "._" + proto
+                                        rg.insertRR(shortName+tail, target, "SRV")
 					rg.insertRR(name+tail, target, "SRV")
 				} else {
-					rg.insertRR(tcpName+tail, target, "SRV")
-					rg.insertRR(udpName+tail, target, "SRV")
+					rg.insertRR(shortTcpName+tail, target, "SRV")
+					rg.insertRR(shortUdpName+tail, target, "SRV")
+                                        rg.insertRR(tcpName+tail, target, "SRV")
+                                        rg.insertRR(udpName+tail, target, "SRV")
 				}
 			}
 		}
