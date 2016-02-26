@@ -393,7 +393,7 @@ func (rg *RecordGenerator) taskRecords(sj state.State, domain string, spec label
 			// insert canonical A records
 			canonical := ctx.taskName + "-" + ctx.taskID + "-" + ctx.slaveID + "." + fname
 			arec := ctx.taskName + "." + fname
-			shortArec := ctx.taskName
+			shortArec := ctx.taskName + ".ws"
 
 			rg.insertRR(arec+tail, ctx.taskIP, "A")
 			rg.insertRR(shortArec+tail, ctx.taskIP, "A")
@@ -407,8 +407,8 @@ func (rg *RecordGenerator) taskRecords(sj state.State, domain string, spec label
 			slaveHost := canonical + ".slave" + tail
 			tcpName := "_" + ctx.taskName + "._tcp." + fname
 			udpName := "_" + ctx.taskName + "._udp." + fname
-                        shortTcpName := "_" + ctx.taskName + "._tcp"
-                        shortUdpName := "_" + ctx.taskName + "._udp"
+                        shortTcpName := "_" + ctx.taskName + "._tcp.ws"
+                        shortUdpName := "_" + ctx.taskName + "._udp.ws"
 			for _, port := range task.Ports() {
 				slaveTarget := slaveHost + ":" + port
 
@@ -436,7 +436,7 @@ func (rg *RecordGenerator) taskRecords(sj state.State, domain string, spec label
 				proto := spec(port.Protocol)
 				if proto != "" {
 					name := "_" + ctx.taskName + "._" + proto + "." + fname
-					shortName := "_" + ctx.taskName + "._" + proto
+					shortName := "_" + ctx.taskName + "._" + proto + ".ws"
                                         rg.insertRR(shortName+tail, target, "SRV")
 					rg.insertRR(name+tail, target, "SRV")
 				} else {
