@@ -226,7 +226,9 @@ func (rg *RecordGenerator) frameworkRecords(sj state.State, domain string, spec 
 		host, port := f.HostPort()
 		if address, ok := hostToIP4(host); ok {
 			a := fname + "." + domain + "."
-			rg.insertRR(a, address, "A")
+                        if !strings.HasPrefix(address, "172") {
+			    rg.insertRR(a, address, "A")
+                        }
 			if port != "" {
 				srv := net.JoinHostPort(a, port)
 				rg.insertRR("_framework._tcp."+a, srv, "SRV")
@@ -243,7 +245,9 @@ func (rg *RecordGenerator) slaveRecords(sj state.State, domain string, spec labe
 		address, ok := hostToIP4(slave.PID.Host)
 		if ok {
 			a := "slave." + domain + "."
-			rg.insertRR(a, address, "A")
+                        if !strings.HasPrefix(address, "172") {
+			    rg.insertRR(a, address, "A")
+                        }
 			srv := net.JoinHostPort(a, slave.PID.Port)
 			rg.insertRR("_slave._tcp."+domain+".", srv, "SRV")
 		} else {
@@ -295,9 +299,13 @@ func (rg *RecordGenerator) masterRecord(domain string, masters []string, leader 
 		return
 	}
 	arec := "leader." + domain + "."
-	rg.insertRR(arec, ip, "A")
+        if !strings.HasPrefix(ip, "172") {
+	    rg.insertRR(arec, ip, "A")
+        }
 	arec = "master." + domain + "."
-	rg.insertRR(arec, ip, "A")
+        if !strings.HasPrefix(ip, "172") {
+	    rg.insertRR(arec, ip, "A")
+        }
 
 	// SRV records
 	tcp := "_leader._tcp." + domain + "."
@@ -319,11 +327,13 @@ func (rg *RecordGenerator) masterRecord(domain string, masters []string, leader 
 		// A records (master and masterN)
 		if master != leaderAddress {
 			arec := "master." + domain + "."
-			added := rg.insertRR(arec, masterIP, "A")
-			if !added {
-				// duplicate master?!
-				continue
-			}
+                        if !strings.HasPrefix(masterIP, "172") {
+			    added := rg.insertRR(arec, masterIP, "A")
+			    if !added {
+			    	// duplicate master?!
+			    	continue
+			    }
+                        }
 		}
 
 		if master == leaderAddress && addedLeaderMasterN {
@@ -332,7 +342,9 @@ func (rg *RecordGenerator) masterRecord(domain string, masters []string, leader 
 		}
 
 		arec := "master" + strconv.Itoa(idx) + "." + domain + "."
-		rg.insertRR(arec, masterIP, "A")
+                if !strings.HasPrefix(masterIP, "172") {
+		    rg.insertRR(arec, masterIP, "A")
+                }
 		idx++
 
 		if master == leaderAddress {
@@ -346,7 +358,9 @@ func (rg *RecordGenerator) masterRecord(domain string, masters []string, leader 
 			logging.Error.Printf("warning: leader %q is not in master list", leader)
 		}
 		arec = "master" + strconv.Itoa(idx) + "." + domain + "."
-		rg.insertRR(arec, ip, "A")
+                if !strings.HasPrefix(ip, "172") {
+		    rg.insertRR(arec, ip, "A")
+                }
 	}
 }
 
@@ -393,22 +407,25 @@ func (rg *RecordGenerator) taskRecords(sj state.State, domain string, spec label
 			// insert canonical A records
 			canonical := ctx.taskName + "-" + ctx.taskID + "-" + ctx.slaveID + "." + fname
 			arec := ctx.taskName + "." + fname
-			shortArec := ctx.taskName + ".ws"
+			shortArec := ctx.taskName
 
-			rg.insertRR(arec+tail, ctx.taskIP, "A")
-			rg.insertRR(shortArec+tail, ctx.taskIP, "A")
-			rg.insertRR(canonical+tail, ctx.taskIP, "A")
-
-			rg.insertRR(shortArec+".slave"+tail, ctx.slaveIP, "A")
-			rg.insertRR(arec+".slave"+tail, ctx.slaveIP, "A")
-			rg.insertRR(canonical+".slave"+tail, ctx.slaveIP, "A")
+                        if !strings.HasPrefix(ctx.taskIP, "172") {
+			    rg.insertRR(arec+tail, ctx.taskIP, "A")
+			    rg.insertRR(shortArec+tail, ctx.taskIP, "A")
+			    rg.insertRR(canonical+tail, ctx.taskIP, "A")
+                        }
+                        if !strings.HasPrefix(ctx.slaveIP, "172") {
+			    rg.insertRR(shortArec+".slave"+tail, ctx.slaveIP, "A")
+			    rg.insertRR(arec+".slave"+tail, ctx.slaveIP, "A")
+			    rg.insertRR(canonical+".slave"+tail, ctx.slaveIP, "A")
+                        }
 
 			// Add RFC 2782 SRV records
 			slaveHost := canonical + ".slave" + tail
 			tcpName := "_" + ctx.taskName + "._tcp." + fname
 			udpName := "_" + ctx.taskName + "._udp." + fname
-                        shortTcpName := "_" + ctx.taskName + "._tcp.ws"
-                        shortUdpName := "_" + ctx.taskName + "._udp.ws"
+                        shortTcpName := "_" + ctx.taskName + "._tcp"
+                        shortUdpName := "_" + ctx.taskName + "._udp"
 			for _, port := range task.Ports() {
 				slaveTarget := slaveHost + ":" + port
 
@@ -436,7 +453,7 @@ func (rg *RecordGenerator) taskRecords(sj state.State, domain string, spec label
 				proto := spec(port.Protocol)
 				if proto != "" {
 					name := "_" + ctx.taskName + "._" + proto + "." + fname
-					shortName := "_" + ctx.taskName + "._" + proto + ".ws"
+					shortName := "_" + ctx.taskName + "._" + proto
                                         rg.insertRR(shortName+tail, target, "SRV")
 					rg.insertRR(name+tail, target, "SRV")
 				} else {
@@ -485,6 +502,10 @@ func (rg *RecordGenerator) setFromLocal(host string, ns string) {
 			if ip == nil {
 				continue
 			}
+			
+			if strings.HasPrefix(ip.String(), "172") {
+                                continue
+                        }
 
 			rg.insertRR(ns, ip.String(), "A")
 		}
