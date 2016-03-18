@@ -52,7 +52,7 @@ func mapping(r rune) rune {
 	case r >= '0' && r <= '9':
 		return r
 	case r == '-' || r == '.' || r == '_':
-		return '-'
+		return '.'
 	default:
 		return -1
 	}
